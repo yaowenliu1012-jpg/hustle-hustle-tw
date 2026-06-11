@@ -179,12 +179,10 @@ function renderStep3() {
         <fieldset><legend>${t('leaderInfo')}</legend>
           ${field('leader_name',  t('name'),    fd.leader_name,  'text')}
           ${field('leader_phone', t('phone'),   fd.leader_phone, 'tel')}
-          ${field('leader_email', t('email'),   fd.leader_email, 'email')}
         </fieldset>
         <fieldset><legend>${t('followerInfo')}</legend>
           ${field('follower_name',  t('name'),  fd.follower_name,  'text')}
           ${field('follower_phone', t('phone'), fd.follower_phone, 'tel')}
-          ${field('follower_email', t('email'), fd.follower_email, 'email')}
         </fieldset>
         <fieldset>
           ${field('payer_email', t('payerEmail'), fd.payer_email, 'email')}
@@ -246,10 +244,8 @@ function validateStep3() {
   if (isDuo) {
     check('leader_name',    notEmpty);
     check('leader_phone',   validPhone);
-    check('leader_email',   validEmail);
     check('follower_name',  notEmpty);
     check('follower_phone', validPhone);
-    check('follower_email', validEmail);
     check('payer_email',    validEmail);
   } else {
     check('solo_name',  notEmpty);
@@ -266,7 +262,7 @@ function validateStep3() {
 
   // 儲存資料
   if (isDuo) {
-    ['leader_name','leader_phone','leader_email','follower_name','follower_phone','follower_email','payer_email','referral'].forEach(id => {
+    ['leader_name','leader_phone','follower_name','follower_phone','payer_email','referral'].forEach(id => {
       state.formData[id] = document.getElementById(id)?.value.trim() || '';
     });
   } else {
@@ -372,10 +368,8 @@ async function submitForm() {
     ...(isDuo ? {
       leaderName:  fd.leader_name,
       leaderPhone: fd.leader_phone,
-      leaderEmail: fd.leader_email,
       followerName:  fd.follower_name,
       followerPhone: fd.follower_phone,
-      followerEmail: fd.follower_email,
       payerEmail:  fd.payer_email,
     } : {
       name:  fd.solo_name,

@@ -10,6 +10,11 @@ let currentDocId = null;
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
 
+  // 防止滑鼠滾輪誤改數字欄位（如價格）的值
+  document.addEventListener('wheel', () => {
+    if (document.activeElement?.type === 'number') document.activeElement.blur();
+  }, { passive: true });
+
   // 密碼輸入框 Enter 鍵登入
   document.getElementById('password-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') doLogin();
@@ -159,9 +164,9 @@ function openModal(docId) {
   const rows = isDuo ? [
     ['課程', r.courseName], ['方案', r.planName],
     ['Leader', `${r.leaderName} / ${r.leaderPhone}`],
-    ['Leader Email', r.leaderEmail],
+    ...(r.leaderEmail ? [['Leader Email', r.leaderEmail]] : []),
     ['Follower', `${r.followerName} / ${r.followerPhone}`],
-    ['Follower Email', r.followerEmail],
+    ...(r.followerEmail ? [['Follower Email', r.followerEmail]] : []),
     ['匯款人 Email', r.payerEmail],
     ['金額', `NT$${Number(r.total).toLocaleString()}`],
     ['後五碼', r.transferCode],
