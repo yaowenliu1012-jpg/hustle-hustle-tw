@@ -317,6 +317,12 @@ input[type="file"] { color: var(--muted); font-size: .85rem; }
 .modal-actions {
   display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem;
 }
+.btn-delete-reg {
+  margin-right: auto;            /* 推到最左邊，跟審核按鈕保持距離避免誤按 */
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 640px) {

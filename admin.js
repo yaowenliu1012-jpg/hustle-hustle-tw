@@ -224,6 +224,27 @@ async function updateStatus(newStatus) {
   }
 }
 
+async function deleteRegistration() {
+  if (!currentDocId) return;
+  const r = allRegistrations.find(x => x.id === currentDocId);
+  if (!r) return;
+
+  const who = r.name || `${r.leaderName} / ${r.followerName}`;
+  if (!confirm(`確定要刪除「${who} — ${r.courseName} ${r.planName}」這筆報名嗎？\n刪除後無法復原！`)) return;
+
+  if (db && !currentDocId.startsWith('demo')) {
+    try {
+      await db.collection('registrations').doc(currentDocId).delete();
+    } catch (e) {
+      alert('刪除失敗：' + e.message); return;
+    }
+  }
+
+  allRegistrations = allRegistrations.filter(x => x.id !== currentDocId);
+  closeModal();
+  applyFilters();
+}
+
 // ── Email 通知（透過 Resend） ────────────────────────────────
 async function sendStatusEmail(toEmail, name, courseName, status) {
   const key = localStorage.getItem('hhtw_resend_key') || SITE_CONFIG.resendApiKey;
