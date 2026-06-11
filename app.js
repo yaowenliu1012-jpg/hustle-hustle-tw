@@ -1,297 +1,408 @@
 // ============================================================
-// app.js — 主程式邏輯（不需要修改）
+//  Hustle Hustle TW — 報名系統主程式
+//  不需要修改這個檔案
 // ============================================================
 
+// Firebase SDK (loaded via CDN in index.html)
+let db = null;
 let lang = 'zh';
-let selCourse = null, selPlan = null, schedOpen = false, formData = {};
+let state = {
+  step: 1,
+  courseId: null,
+  planId: null,
+  formData: {},
+};
 
-function t(key) { return I18N[lang][key]; }
+// ── 初始化 ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+  renderStep1();
+  document.getElementById('lang-toggle').addEventListener('click', toggleLang);
+});
 
-function setLang(l) {
-  lang = l;
-  document.querySelectorAll('.lang-btn').forEach(b =>
-    b.classList.toggle('active', b.textContent.trim() === (l === 'zh' ? '中文' : 'EN'))
-  );
-  applyLang();
+function initFirebase() {
+  try {
+    firebase.initializeApp(SITE_CONFIG.firebase);
+    db = firebase.firestore();
+  } catch (e) {
+    console.warn('Firebase 尚未設定，報名資料不會儲存到資料庫。');
+  }
 }
 
-function applyLang() {
-  const l = I18N[lang];
-  document.getElementById('hero-title').textContent = l.heroTitle;
-  document.getElementById('hero-sub').textContent = l.heroSub;
-  ['1','2','3','4'].forEach((i, idx) => { document.getElementById('sl' + i).textContent = l.steps[idx]; });
-  document.getElementById('p1-title').textContent = l.p1Title;
-  document.getElementById('sched-toggle-label').textContent = l.schedToggle;
-  document.getElementById('p2-title').textContent = l.p2Title;
-  document.getElementById('btn-p1-next').textContent = l.btnNext;
-  document.getElementById('btn-p2-back').textContent = l.btnBack;
-  document.getElementById('btn-p2-next').textContent = l.btnFill;
-  document.getElementById('btn-p3-back').textContent = l.btnBack;
-  document.getElementById('btn-p3-next').textContent = l.btnPay;
-  document.getElementById('btn-p4-back').textContent = l.btnBackData;
-  document.getElementById('btn-submit').textContent = l.btnSubmit;
-  document.getElementById('referral-card-title').textContent = l.referralCardTitle;
-  document.getElementById('referral-label').textContent = l.referralLabel;
-  document.getElementById('referral-note').textContent = l.referralNote;
-  document.getElementById('checklist-title').textContent = l.checklistTitle;
-  document.getElementById('bd-base-label').textContent = l.bdBaseLabel;
-  document.getElementById('bd-total-label').textContent = l.bdTotalLabel;
-  document.getElementById('payment-label').textContent = l.paymentLabel;
-  document.getElementById('payment-sub').textContent = l.paymentSub;
-  document.getElementById('bank-title').textContent = l.bankTitle;
-  document.getElementById('bank-label-bank').textContent = l.bankBank;
-  document.getElementById('bank-val-bank').textContent = SITE_CONFIG.bank.name;
-  document.getElementById('bank-label-acct').textContent = l.bankAcct;
-  document.getElementById('bank-val-acct').textContent = SITE_CONFIG.bank.account;
-  document.getElementById('bank-label-name').textContent = l.bankName;
-  document.getElementById('bank-val-name').textContent = SITE_CONFIG.bank.holder;
-  document.getElementById('bank-label-memo').textContent = l.bankMemo;
-  document.getElementById('copy-btn').textContent = l.copyBtn;
-  document.getElementById('transfer-card-title').textContent = l.transferCardTitle;
-  document.getElementById('payer-email-label').textContent = l.payerEmailLabel;
-  document.getElementById('payer-email-note').textContent = l.payerEmailNote;
-  document.getElementById('transfer5-label').textContent = l.transfer5Label;
-  document.getElementById('transfer5-note').textContent = l.transfer5Note;
-  const t5 = document.getElementById('transfer5');
-  if (t5) t5.placeholder = l.transfer5Placeholder;
-  document.getElementById('success-title').textContent = l.successTitle;
-  document.getElementById('success-body').innerHTML = l.successBody;
-  renderCourses();
-  if (selCourse !== null) renderPlans();
+// ── 語言切換 ─────────────────────────────────────────────────
+function toggleLang() {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  document.getElementById('lang-toggle').textContent = t('langToggle');
+  refreshCurrentStep();
 }
 
-function updateSteps(active) {
-  [1,2,3,4].forEach(i => {
-    const n = document.getElementById('sn' + i), lb = document.getElementById('sl' + i);
-    if (i < active) { n.className = 'step-num done'; n.innerHTML = '<i class="ti ti-check" style="font-size:11px"></i>'; lb.className = 'step-label done'; }
-    else if (i === active) { n.className = 'step-num active'; n.textContent = i; lb.className = 'step-label active'; }
-    else { n.className = 'step-num'; n.textContent = i; lb.className = 'step-label'; }
+function t(key) {
+  return I18N[lang][key] || key;
+}
+
+function refreshCurrentStep() {
+  switch (state.step) {
+    case 1: renderStep1(); break;
+    case 2: renderStep2(); break;
+    case 3: renderStep3(); break;
+    case 4: renderStep4(); break;
+  }
+}
+
+// ── Step 1：選課程 ───────────────────────────────────────────
+function renderStep1() {
+  state.step = 1;
+  updateStepIndicator();
+  const main = document.getElementById('main');
+  main.innerHTML = `<h2 class="step-title">${t('selectCourse')}</h2>
+    <div class="course-grid">
+      ${SITE_CONFIG.courses.map(c => `
+        <div class="course-card ${state.courseId === c.id ? 'selected' : ''}" data-id="${c.id}">
+          <div class="course-emoji">${c.emoji}</div>
+          <div class="course-name">${lang === 'zh' ? c.name : c.nameEn}</div>
+          <div class="course-sessions">
+            <strong>${t('sessions')}：</strong>
+            ${(lang === 'zh' ? c.sessions : c.sessionsEn).map(s => `<div>${s}</div>`).join('')}
+          </div>
+          <div class="course-prices">
+            ${c.plans.map(p => `<span class="price-tag">${lang === 'zh' ? p.label : p.labelEn} NT$${p.price.toLocaleString()}</span>`).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="step1-next" ${!state.courseId ? 'disabled' : ''} onclick="goStep2()">${t('next')}</button>
+    </div>`;
+
+  main.querySelectorAll('.course-card').forEach(card => {
+    card.addEventListener('click', () => {
+      state.courseId = card.dataset.id;
+      state.planId = null;
+      main.querySelectorAll('.course-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      document.getElementById('step1-next').disabled = false;
+    });
   });
 }
 
-function goPage(n) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page' + n).classList.add('active');
-  updateSteps(n > 4 ? 4 : n);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function goStep2() {
+  if (!state.courseId) return;
+  renderStep2();
 }
 
-function renderCourses() {
-  const l = I18N[lang];
-  document.getElementById('courses-grid').innerHTML = COURSES_DATA.map((c, i) => `
-    <div class="course-card${selCourse === i ? ' selected' : ''}" onclick="pickCourse(this,${i})">
-      <span class="course-icon">${c.icon}</span>
-      <div class="course-name">${l.courses[i].name}</div>
-      <span class="course-badge ${c.badgeClass}">${l.courses[i].badge}</span>
-    </div>`).join('');
-}
-
-function renderPlans() {
-  if (selCourse === null) return;
-  const l = I18N[lang]; const c = COURSES_DATA[selCourse];
-  document.getElementById('plans-grid').innerHTML = c.plans.map((p, i) => `
-    <div class="plan-card${selPlan === i ? ' selected' : ''}" onclick="pickPlan(this,${i})">
-      <div class="plan-name">${l.courses[selCourse].planNames[i]}</div>
-      <div class="plan-price">NT$ ${p.price.toLocaleString()}</div>
-      <div class="plan-desc">${l.courses[selCourse].planDescs[i]}</div>
-    </div>`).join('');
-  document.getElementById('p2-icon').textContent = COURSES_DATA[selCourse].icon;
-  document.getElementById('p2-course').textContent = l.courses[selCourse].name;
-  document.getElementById('btn-p2-next').style.display = selPlan !== null ? 'block' : 'none';
-}
-
-function pickCourse(el, idx) {
-  selCourse = idx; selPlan = null;
-  renderCourses();
-  const c = COURSES_DATA[idx];
-  const sl = document.getElementById('sched-list');
-  sl.innerHTML = c.schedules.map((s, i) =>
-    `<div class="schedule-item"><span class="s-num">${i + 1}</span>${s}</div>`
-  ).join('');
-  sl.classList.remove('open'); schedOpen = false;
-  document.getElementById('sched-arrow').style.transform = '';
-  document.getElementById('schedule-section').style.display = 'block';
-}
-
-function toggleSchedule() {
-  schedOpen = !schedOpen;
-  document.getElementById('sched-list').classList.toggle('open', schedOpen);
-  document.getElementById('sched-arrow').style.transform = schedOpen ? 'rotate(180deg)' : '';
-}
-
-function pickPlan(el, idx) {
-  selPlan = idx; renderPlans();
-  document.getElementById('btn-p2-next').style.display = 'block';
-}
-
-function buildForm() {
-  const l = I18N[lang]; const cd = COURSES_DATA[selCourse]; const p = cd.plans[selPlan];
-  document.getElementById('p3-icon').textContent = cd.icon;
-  document.getElementById('p3-course').textContent = l.courses[selCourse].name;
-  document.getElementById('p3-plan').textContent = l.courses[selCourse].planNames[selPlan];
-  let html = '';
-  if (p.type === 'single') {
-    html = `<div class="form-card">
-      <div class="form-card-title"><i class="ti ti-user" aria-hidden="true"></i> ${l.formPersonTitle}</div>
-      <div class="form-grid">
-        <div class="fg"><label>${l.nameLabel}</label><input type="text" id="f-name" placeholder="${l.namePh}"/><div class="err-msg" id="err-name">${l.errName}</div></div>
-        <div class="fg"><label>${l.phoneLabel}</label><input type="tel" id="f-phone" placeholder="${l.phonePh}"/><div class="err-msg" id="err-phone">${l.errPhone}</div></div>
-        <div class="fg full"><label>${l.emailLabel}</label><input type="email" id="f-email" placeholder="your@email.com"/><div class="err-msg" id="err-email">${l.errEmail}</div></div>
-        <div class="fg full"><label>${l.roleLabel}</label>
-          <div class="role-row" id="role-wrap">
-            <div class="role-btn" onclick="pickRole(this,'role-wrap')">🕺 Leader</div>
-            <div class="role-btn" onclick="pickRole(this,'role-wrap')">💃 Follower</div>
-          </div>
-          <div class="err-msg" id="err-role">${l.errRole}</div>
+// ── Step 2：選方案 ───────────────────────────────────────────
+function renderStep2() {
+  state.step = 2;
+  updateStepIndicator();
+  const course = SITE_CONFIG.courses.find(c => c.id === state.courseId);
+  const main = document.getElementById('main');
+  main.innerHTML = `<h2 class="step-title">${t('selectPlan')}</h2>
+    <div class="plan-grid">
+      ${course.plans.map(p => `
+        <div class="plan-card ${state.planId === p.id ? 'selected' : ''}" data-id="${p.id}">
+          <div class="plan-label">${lang === 'zh' ? p.label : p.labelEn}</div>
+          <div class="plan-price">NT$${p.price.toLocaleString()}</div>
         </div>
-      </div></div>`;
+      `).join('')}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="renderStep1()">${t('back')}</button>
+      <button class="btn btn-primary" id="step2-next" ${!state.planId ? 'disabled' : ''} onclick="goStep3()">${t('next')}</button>
+    </div>`;
+
+  main.querySelectorAll('.plan-card').forEach(card => {
+    card.addEventListener('click', () => {
+      state.planId = card.dataset.id;
+      main.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      document.getElementById('step2-next').disabled = false;
+    });
+  });
+}
+
+function goStep3() {
+  if (!state.planId) return;
+  renderStep3();
+}
+
+// ── Step 3：填資料 ───────────────────────────────────────────
+function renderStep3() {
+  state.step = 3;
+  updateStepIndicator();
+  const isDuo = state.planId === 'duo';
+  const fd = state.formData;
+  const main = document.getElementById('main');
+
+  main.innerHTML = `<h2 class="step-title">${t('fillInfo')}</h2>
+    <form id="reg-form" novalidate>
+      ${isDuo ? `
+        <fieldset><legend>${t('leaderInfo')}</legend>
+          ${field('leader_name',  t('name'),    fd.leader_name,  'text')}
+          ${field('leader_phone', t('phone'),   fd.leader_phone, 'tel')}
+          ${field('leader_email', t('email'),   fd.leader_email, 'email')}
+        </fieldset>
+        <fieldset><legend>${t('followerInfo')}</legend>
+          ${field('follower_name',  t('name'),  fd.follower_name,  'text')}
+          ${field('follower_phone', t('phone'), fd.follower_phone, 'tel')}
+          ${field('follower_email', t('email'), fd.follower_email, 'email')}
+        </fieldset>
+        <fieldset>
+          ${field('payer_email', t('payerEmail'), fd.payer_email, 'email')}
+          ${field('referral', t('referral'), fd.referral, 'text', false)}
+        </fieldset>
+      ` : `
+        <fieldset>
+          ${field('solo_name',  t('name'),  fd.solo_name,  'text')}
+          ${field('solo_phone', t('phone'), fd.solo_phone, 'tel')}
+          ${field('solo_email', t('email'), fd.solo_email, 'email')}
+          <div class="form-group">
+            <label>${t('role')}</label>
+            <div class="radio-row">
+              <label><input type="radio" name="solo_role" value="Leader" ${fd.solo_role === 'Leader' ? 'checked' : ''}> ${t('leader')}</label>
+              <label><input type="radio" name="solo_role" value="Follower" ${fd.solo_role === 'Follower' ? 'checked' : ''}> ${t('follower')}</label>
+            </div>
+            <span class="error-msg" id="err-solo_role"></span>
+          </div>
+          ${field('referral', t('referral'), fd.referral, 'text', false)}
+        </fieldset>
+      `}
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="renderStep2()">${t('back')}</button>
+        <button type="button" class="btn btn-primary" onclick="validateStep3()">${t('next')}</button>
+      </div>
+    </form>`;
+}
+
+function field(id, label, value = '', type = 'text', required = true) {
+  return `<div class="form-group">
+    <label for="${id}">${label}${required ? ' <span class="req">*</span>' : ''}</label>
+    <input id="${id}" name="${id}" type="${type}" value="${escHtml(value)}" autocomplete="off">
+    <span class="error-msg" id="err-${id}"></span>
+  </div>`;
+}
+
+function escHtml(v) {
+  return String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function validateStep3() {
+  const isDuo = state.planId === 'duo';
+  const form = document.getElementById('reg-form');
+  let ok = true;
+
+  function check(id, validator) {
+    const el = document.getElementById(id);
+    const err = document.getElementById('err-' + id);
+    if (!el || !err) return;
+    const msg = validator(el.value.trim());
+    err.textContent = msg;
+    if (msg) { ok = false; el.focus(); }
+  }
+
+  const notEmpty = v => v ? '' : t('required');
+  const validEmail = v => !v ? t('required') : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : t('invalidEmail');
+  const validPhone = v => !v ? t('required') : /^[0-9+\-\s]{7,15}$/.test(v) ? '' : t('invalidPhone');
+
+  if (isDuo) {
+    check('leader_name',    notEmpty);
+    check('leader_phone',   validPhone);
+    check('leader_email',   validEmail);
+    check('follower_name',  notEmpty);
+    check('follower_phone', validPhone);
+    check('follower_email', validEmail);
+    check('payer_email',    validEmail);
   } else {
-    html = `<div class="form-card">
-      <div class="form-card-title"><span class="role-label role-leader">🕺 Leader</span></div>
-      <div class="form-grid">
-        <div class="fg"><label>${l.nameLabel}</label><input type="text" id="f-l-name" placeholder="Leader"/><div class="err-msg" id="err-l-name">${l.errLeaderName}</div></div>
-        <div class="fg"><label>${l.phoneLabel}</label><input type="tel" id="f-l-phone" placeholder="${l.phonePh}"/><div class="err-msg" id="err-l-phone">${l.errLeaderPhone}</div></div>
-        <div class="fg full"><label>${l.emailLabel}</label><input type="email" id="f-l-email" placeholder="leader@email.com"/><div class="err-msg" id="err-l-email">${l.errLeaderEmail}</div></div>
-      </div></div>
-    <div class="form-card">
-      <div class="form-card-title"><span class="role-label role-follower">💃 Follower</span></div>
-      <div class="form-grid">
-        <div class="fg"><label>${l.nameLabel}</label><input type="text" id="f-f-name" placeholder="Follower"/><div class="err-msg" id="err-f-name">${l.errFollowerName}</div></div>
-        <div class="fg"><label>${l.phoneLabel}</label><input type="tel" id="f-f-phone" placeholder="${l.phonePh}"/><div class="err-msg" id="err-f-phone">${l.errFollowerPhone}</div></div>
-        <div class="fg full"><label>${l.emailLabel}</label><input type="email" id="f-f-email" placeholder="follower@email.com"/><div class="err-msg" id="err-f-email">${l.errFollowerEmail}</div></div>
-      </div></div>`;
+    check('solo_name',  notEmpty);
+    check('solo_phone', validPhone);
+    check('solo_email', validEmail);
+    // radio
+    const roleVal = form.querySelector('input[name="solo_role"]:checked')?.value || '';
+    const roleErr = document.getElementById('err-solo_role');
+    if (!roleVal) { roleErr.textContent = t('required'); ok = false; }
+    else roleErr.textContent = '';
   }
-  document.getElementById('form-fields').innerHTML = html;
-  document.getElementById('f-referral').value = '';
-  document.getElementById('referral-tag').classList.remove('show');
-}
 
-function onReferralInput(el) {
-  const tag = document.getElementById('referral-tag');
-  const tagText = document.getElementById('referral-tag-text');
-  if (el.value.trim()) { tag.classList.add('show'); tagText.textContent = I18N[lang].referralTagTpl(el.value.trim()); }
-  else tag.classList.remove('show');
-}
+  if (!ok) return;
 
-function pickRole(el, wrapId) {
-  document.getElementById(wrapId).querySelectorAll('.role-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('err-role'); });
-  el.classList.add('active');
-  const em = document.getElementById('err-role'); if (em) em.classList.remove('show');
-}
-
-function validatePage3() {
-  const p = COURSES_DATA[selCourse].plans[selPlan]; let ok = true;
-  function chk(id, errId) {
-    const el = document.getElementById(id), em = document.getElementById(errId);
-    if (!el || !em) return;
-    if (!el.value.trim()) { el.classList.add('err'); em.classList.add('show'); ok = false; }
-    else { el.classList.remove('err'); em.classList.remove('show'); }
-  }
-  if (p.type === 'single') {
-    chk('f-name','err-name'); chk('f-phone','err-phone'); chk('f-email','err-email');
-    const rw = document.getElementById('role-wrap');
-    if (!rw.querySelector('.role-btn.active')) {
-      rw.querySelectorAll('.role-btn').forEach(b => b.classList.add('err-role'));
-      document.getElementById('err-role').classList.add('show'); ok = false;
-    }
+  // 儲存資料
+  if (isDuo) {
+    ['leader_name','leader_phone','leader_email','follower_name','follower_phone','follower_email','payer_email','referral'].forEach(id => {
+      state.formData[id] = document.getElementById(id)?.value.trim() || '';
+    });
   } else {
-    chk('f-l-name','err-l-name'); chk('f-l-phone','err-l-phone'); chk('f-l-email','err-l-email');
-    chk('f-f-name','err-f-name'); chk('f-f-phone','err-f-phone'); chk('f-f-email','err-f-email');
+    ['solo_name','solo_phone','solo_email','referral'].forEach(id => {
+      state.formData[id] = document.getElementById(id)?.value.trim() || '';
+    });
+    state.formData.solo_role = form.querySelector('input[name="solo_role"]:checked')?.value || '';
   }
-  return ok;
+
+  renderStep4();
 }
 
-function collectFormData() {
-  const p = COURSES_DATA[selCourse].plans[selPlan];
-  formData = { referral: document.getElementById('f-referral').value.trim() };
-  if (p.type === 'single') {
-    formData.name = document.getElementById('f-name').value;
-    formData.phone = document.getElementById('f-phone').value;
-    formData.email = document.getElementById('f-email').value;
-    formData.role = document.getElementById('role-wrap').querySelector('.role-btn.active')?.textContent.trim() || '';
-  } else {
-    formData.leaderName = document.getElementById('f-l-name').value;
-    formData.leaderPhone = document.getElementById('f-l-phone').value;
-    formData.leaderEmail = document.getElementById('f-l-email').value;
-    formData.followerName = document.getElementById('f-f-name').value;
-    formData.followerPhone = document.getElementById('f-f-phone').value;
-    formData.followerEmail = document.getElementById('f-f-email').value;
-  }
-}
-
-function buildPaymentPage() {
-  const l = I18N[lang]; const cd = COURSES_DATA[selCourse]; const p = cd.plans[selPlan];
-  const hasRef = !!formData.referral;
+// ── Step 4：匯款 ─────────────────────────────────────────────
+function renderStep4() {
+  state.step = 4;
+  updateStepIndicator();
+  const course = SITE_CONFIG.courses.find(c => c.id === state.courseId);
+  const plan   = course.plans.find(p => p.id === state.planId);
+  const fd     = state.formData;
+  const isDuo  = state.planId === 'duo';
+  const hasRef = fd.referral && fd.referral.trim();
   const discount = hasRef ? SITE_CONFIG.referralDiscount : 0;
-  const finalPrice = p.price - discount;
-  document.getElementById('p4-icon').textContent = cd.icon;
-  document.getElementById('p4-course').textContent = l.courses[selCourse].name;
-  document.getElementById('p4-plan').textContent = l.courses[selCourse].planNames[selPlan];
-  document.getElementById('pay-amount').textContent = 'NT$ ' + finalPrice.toLocaleString();
-  document.getElementById('bank-memo').textContent = (formData.name || formData.leaderName || '') + ' · ' + l.courses[selCourse].name;
-  document.getElementById('bd-base').textContent = 'NT$ ' + p.price.toLocaleString();
-  const refRow = document.getElementById('bd-referral-row');
-  if (hasRef) { refRow.style.display = 'flex'; document.getElementById('bd-referral-label').textContent = l.bdRefLabel(formData.referral); }
-  else refRow.style.display = 'none';
-  document.getElementById('bd-total').textContent = 'NT$ ' + finalPrice.toLocaleString();
-  let items = '';
-  if (p.type === 'single') {
-    items += `<div class="check-item"><span class="check-dot"></span>${formData.name}・${formData.role}</div>`;
-    items += `<div class="check-item"><span class="check-dot"></span>${formData.phone}・${formData.email}</div>`;
-  } else {
-    items += `<div class="check-item"><span class="check-dot"></span>🕺 ${formData.leaderName}・${formData.leaderPhone}</div>`;
-    items += `<div class="check-item"><span class="check-dot"></span>💃 ${formData.followerName}・${formData.followerPhone}</div>`;
+  const total  = plan.price - discount;
+
+  const main = document.getElementById('main');
+  main.innerHTML = `<h2 class="step-title">${t('payment')}</h2>
+    <div class="confirm-box">
+      <h3>${t('confirmInfo')}</h3>
+      <table class="confirm-table">
+        <tr><td>${t('course')}</td><td>${course.emoji} ${lang === 'zh' ? course.name : course.nameEn}</td></tr>
+        <tr><td>${t('plan')}</td><td>${lang === 'zh' ? plan.label : plan.labelEn}</td></tr>
+        ${isDuo ? `
+          <tr><td>Leader</td><td>${fd.leader_name} / ${fd.leader_phone}</td></tr>
+          <tr><td>Follower</td><td>${fd.follower_name} / ${fd.follower_phone}</td></tr>
+          <tr><td>${t('payerEmail')}</td><td>${fd.payer_email}</td></tr>
+        ` : `
+          <tr><td>${t('name')}</td><td>${fd.solo_name}</td></tr>
+          <tr><td>${t('phone')}</td><td>${fd.solo_phone}</td></tr>
+          <tr><td>${t('email')}</td><td>${fd.solo_email}</td></tr>
+          <tr><td>${t('role')}</td><td>${fd.solo_role}</td></tr>
+        `}
+        ${hasRef ? `<tr><td>${t('discount')}</td><td>- NT$${discount} （${fd.referral}）</td></tr>` : ''}
+        <tr class="total-row"><td>${t('totalAmount')}</td><td>NT$${total.toLocaleString()}</td></tr>
+      </table>
+    </div>
+
+    <div class="bank-box">
+      <div><strong>${t('bankName')}：</strong>${SITE_CONFIG.bank.name}</div>
+      <div class="account-row">
+        <strong>${t('bankAccount')}：</strong>
+        <span id="bank-account">${SITE_CONFIG.bank.account}</span>
+        <button class="btn btn-copy" onclick="copyAccount()">${t('copy')}</button>
+      </div>
+      <div><strong>${t('bankHolder')}：</strong>${SITE_CONFIG.bank.holder}</div>
+    </div>
+
+    <div class="form-group" style="margin-top:1.5rem">
+      <label for="transfer-code">${t('transferCode')} <span class="req">*</span></label>
+      <input id="transfer-code" type="text" inputmode="numeric" maxlength="5" placeholder="12345">
+      <span class="error-msg" id="err-transfer-code"></span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="renderStep3()">${t('back')}</button>
+      <button class="btn btn-primary" onclick="submitForm()">${t('submit')}</button>
+    </div>`;
+}
+
+function copyAccount() {
+  navigator.clipboard.writeText(SITE_CONFIG.bank.accountRaw).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = t('copied');
+    setTimeout(() => btn.textContent = t('copy'), 2000);
+  });
+}
+
+// ── 送出報名 ─────────────────────────────────────────────────
+async function submitForm() {
+  const code = document.getElementById('transfer-code').value.trim();
+  const err  = document.getElementById('err-transfer-code');
+  if (!/^\d{5}$/.test(code)) { err.textContent = t('invalidCode'); return; }
+  err.textContent = '';
+
+  const course = SITE_CONFIG.courses.find(c => c.id === state.courseId);
+  const plan   = course.plans.find(p => p.id === state.planId);
+  const isDuo  = state.planId === 'duo';
+  const fd     = state.formData;
+  const hasRef = fd.referral && fd.referral.trim();
+  const discount = hasRef ? SITE_CONFIG.referralDiscount : 0;
+
+  const payload = {
+    courseId:   state.courseId,
+    courseName: course.name,
+    planId:     state.planId,
+    planName:   plan.label,
+    price:      plan.price,
+    discount,
+    total:      plan.price - discount,
+    transferCode: code,
+    referral:   fd.referral || '',
+    status:     'pending',
+    createdAt:  new Date().toISOString(),
+    ...(isDuo ? {
+      leaderName:  fd.leader_name,
+      leaderPhone: fd.leader_phone,
+      leaderEmail: fd.leader_email,
+      followerName:  fd.follower_name,
+      followerPhone: fd.follower_phone,
+      followerEmail: fd.follower_email,
+      payerEmail:  fd.payer_email,
+    } : {
+      name:  fd.solo_name,
+      phone: fd.solo_phone,
+      email: fd.solo_email,
+      role:  fd.solo_role,
+    }),
+  };
+
+  const submitBtn = document.querySelector('.btn-primary[onclick="submitForm()"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '送出中...';
+
+  try {
+    // 1. 寫入 Firebase
+    if (db) {
+      await db.collection('registrations').add(payload);
+    }
+
+    // 2. WhatsApp 通知
+    sendWhatsApp(payload);
+
+    // 3. 顯示成功
+    showSuccess();
+  } catch (e) {
+    console.error(e);
+    submitBtn.disabled = false;
+    submitBtn.textContent = t('submit');
+    alert('送出失敗，請稍後再試。');
   }
-  if (hasRef) items += `<div class="check-item"><span class="check-dot" style="background:#534AB7"></span>${l.referralTagTpl(formData.referral)}</div>`;
-  document.getElementById('checklist-items').innerHTML = items;
-  document.getElementById('payer-email-wrap').style.display = p.type === 'couple' ? 'flex' : 'none';
-  document.getElementById('transfer5').value = '';
-  document.getElementById('transfer5').placeholder = l.transfer5Placeholder;
-  const pe = document.getElementById('payer-email'); if (pe) pe.value = '';
 }
 
-function copyAcct() {
-  navigator.clipboard && navigator.clipboard.writeText(SITE_CONFIG.bank.accountRaw);
-  const btn = document.getElementById('copy-btn');
-  btn.textContent = I18N[lang].copiedBtn;
-  setTimeout(() => btn.textContent = I18N[lang].copyBtn, 1500);
+function showSuccess() {
+  const main = document.getElementById('main');
+  main.innerHTML = `<div class="success-box">
+    <div class="success-icon">✅</div>
+    <h2>${t('submitSuccess')}</h2>
+    <p>請等候我們的 Email 通知（審核通過或拒絕）。</p>
+    <button class="btn btn-primary" onclick="location.reload()">再次報名</button>
+  </div>`;
+  updateStepIndicator(true);
 }
 
-function validatePage4() {
-  const l = I18N[lang]; const p = COURSES_DATA[selCourse].plans[selPlan]; let ok = true;
-  if (p.type === 'couple') {
-    const pe = document.getElementById('payer-email'), pee = document.getElementById('err-payer-email');
-    pee.textContent = l.errPayerEmail;
-    if (!pe.value.trim()) { pe.classList.add('err'); pee.classList.add('show'); ok = false; }
-    else { pe.classList.remove('err'); pee.classList.remove('show'); }
-  }
-  const t5 = document.getElementById('transfer5'), t5e = document.getElementById('err-transfer5');
-  t5e.textContent = l.errTransfer5;
-  if (t5.value.trim().length < 5) { t5.classList.add('err'); t5e.classList.add('show'); ok = false; }
-  else { t5.classList.remove('err'); t5e.classList.remove('show'); }
-  return ok;
+// ── WhatsApp 通知（CallMeBot） ────────────────────────────────
+function sendWhatsApp(payload) {
+  const msg = encodeURIComponent(
+    `【新報名】${payload.courseName} ${payload.planName}\n` +
+    `姓名：${payload.name || payload.leaderName + ' / ' + payload.followerName}\n` +
+    `金額：NT$${payload.total}\n` +
+    `後五碼：${payload.transferCode}`
+  );
+  const url = `https://api.callmebot.com/whatsapp.php?phone=${SITE_CONFIG.whatsappNumber}&text=${msg}&apikey=YOUR_CALLMEBOT_APIKEY`;
+  fetch(url).catch(() => {});
 }
 
-function submitForm() {
-  if (!validatePage4()) return;
-  // TODO: 串接 Firebase 儲存報名資料
-  goPage(5);
+// ── 步驟指示器 ───────────────────────────────────────────────
+function updateStepIndicator(done = false) {
+  const steps = document.querySelectorAll('.step-item');
+  steps.forEach((el, i) => {
+    el.classList.remove('active', 'done');
+    if (done) { el.classList.add('done'); return; }
+    if (i + 1 < state.step) el.classList.add('done');
+    if (i + 1 === state.step) el.classList.add('active');
+  });
+
+  const labels = [t('step1'), t('step2'), t('step3'), t('step4')];
+  steps.forEach((el, i) => {
+    el.querySelector('.step-label').textContent = labels[i];
+  });
 }
-
-// 按鈕事件綁定
-document.getElementById('btn-p1-next').onclick = function () {
-  if (selCourse === null) return;
-  renderPlans(); selPlan = null;
-  document.getElementById('btn-p2-next').style.display = 'none';
-  goPage(2);
-};
-document.getElementById('btn-p2-next').onclick = function () {
-  if (selPlan === null) return; buildForm(); goPage(3);
-};
-document.getElementById('btn-p3-next').onclick = function () {
-  if (!validatePage3()) return; collectFormData(); buildPaymentPage(); goPage(4);
-};
-
-// 初始化
-renderCourses();
-applyLang();

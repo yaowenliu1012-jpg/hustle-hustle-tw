@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>後台管理 — Hustle Hustle TW</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- 登入畫面 -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-logo">Hustle Hustle TW</div>
+      <h2>後台管理</h2>
+      <div class="form-group">
+        <label>密碼</label>
+        <input id="password-input" type="password" placeholder="請輸入密碼" autofocus>
+        <span class="error-msg" id="login-err"></span>
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">登入</button>
+    </div>
+  </div>
+
+  <!-- 後台主畫面 -->
+  <div id="admin-screen" style="display:none">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">HH TW 後台</div>
+      <nav>
+        <a class="nav-item active" data-tab="registrations" onclick="switchTab('registrations')">📋 報名管理</a>
+        <a class="nav-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 設定</a>
+      </nav>
+      <button class="btn btn-logout" onclick="doLogout()">登出</button>
+    </aside>
+
+    <main class="admin-main">
+
+      <!-- ── 報名管理 ── -->
+      <section id="tab-registrations" class="tab-section">
+        <div class="section-header">
+          <h1>報名管理</h1>
+          <div class="header-actions">
+            <select id="filter-status" onchange="applyFilters()">
+              <option value="">全部狀態</option>
+              <option value="pending">待審核</option>
+              <option value="approved">已通過</option>
+              <option value="rejected">已拒絕</option>
+            </select>
+            <select id="filter-course" onchange="applyFilters()">
+              <option value="">全部課程</option>
+            </select>
+            <button class="btn btn-secondary" onclick="exportExcel()">匯出 Excel</button>
+            <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
+          </div>
+        </div>
+
+        <div id="stats-row" class="stats-row"></div>
+
+        <div class="table-wrap">
+          <table id="reg-table">
+            <thead>
+              <tr>
+                <th>時間</th>
+                <th>課程</th>
+                <th>方案</th>
+                <th>姓名</th>
+                <th>電話</th>
+                <th>Email</th>
+                <th>金額</th>
+                <th>後五碼</th>
+                <th>推薦人</th>
+                <th>狀態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="reg-tbody">
+              <tr><td colspan="11" class="loading-cell">載入中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── 設定 ── -->
+      <section id="tab-settings" class="tab-section" style="display:none">
+        <div class="section-header"><h1>系統設定</h1></div>
+        <div class="settings-grid">
+
+          <div class="setting-card">
+            <h3>銀行帳號</h3>
+            <div class="form-group">
+              <label>銀行名稱</label>
+              <input id="s-bank-name" type="text">
+            </div>
+            <div class="form-group">
+              <label>帳號（顯示用，含符號）</label>
+              <input id="s-bank-account" type="text">
+            </div>
+            <div class="form-group">
+              <label>帳號（複製用，無符號）</label>
+              <input id="s-bank-raw" type="text">
+            </div>
+            <div class="form-group">
+              <label>戶名</label>
+              <input id="s-bank-holder" type="text">
+            </div>
+          </div>
+
+          <div class="setting-card">
+            <h3>通知設定</h3>
+            <div class="form-group">
+              <label>WhatsApp 號碼（CallMeBot，含國碼）</label>
+              <input id="s-whatsapp" type="text" placeholder="886922800756">
+            </div>
+            <div class="form-group">
+              <label>CallMeBot API Key</label>
+              <input id="s-callmebot-key" type="text" placeholder="YOUR_APIKEY">
+            </div>
+            <div class="form-group">
+              <label>Resend API Key（Email 發送）</label>
+              <input id="s-resend-key" type="password" placeholder="re_...">
+            </div>
+            <div class="form-group">
+              <label>寄件人 Email</label>
+              <input id="s-sender-email" type="email" placeholder="noreply@your-domain.com">
+            </div>
+          </div>
+
+          <div class="setting-card">
+            <h3>折扣 / 密碼</h3>
+            <div class="form-group">
+              <label>推薦人折扣金額 (NT$)</label>
+              <input id="s-discount" type="number" min="0">
+            </div>
+            <div class="form-group">
+              <label>後台管理密碼</label>
+              <input id="s-admin-pw" type="password" placeholder="新密碼（留空不修改）">
+            </div>
+          </div>
+
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
+        </div>
+        <p class="settings-note">⚠️ 設定儲存在瀏覽器本機，若清除快取或換電腦需重新設定。如需永久儲存請串接 Firebase Remote Config。</p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 審核 Modal -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3 id="modal-title">審核報名</h3>
+      <div id="modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn btn-danger"   id="btn-reject"  onclick="updateStatus('rejected')">拒絕</button>
+        <button class="btn btn-success"  id="btn-approve" onclick="updateStatus('approved')">通過</button>
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
