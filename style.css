@@ -171,16 +171,25 @@ body {
 
 .course-hover {
   position: absolute;
-  inset: 0;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  min-height: calc(100% + 6px);   /* 至少蓋滿卡片，內容多就往下長 */
+  height: auto;
   background: #fff;
-  border-radius: calc(var(--radius) - 3px);
-  overflow-y: auto;
+  border: 3px solid #111;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   opacity: 0;
   visibility: hidden;
   transition: opacity .2s;
-  z-index: 1;
+  z-index: 10;                    /* 蓋過下方其他卡片 */
   color: #111;
+  overflow: hidden;
 }
+.course-card:hover { z-index: 20; }
+.course-card:hover .course-hover,
+.course-card.show-info { z-index: 20; }
 .course-card:hover .course-hover,
 .course-card.show-info .course-hover {
   opacity: 1;
@@ -188,26 +197,27 @@ body {
 }
 .course-hover-photo {
   width: 100%;
-  height: 45%;
-  min-height: 110px;
+  height: 140px;
   object-fit: cover;
   display: block;
+  border-bottom: 3px solid #111;
 }
-.course-hover-body { padding: .8rem .9rem; }
+.course-hover-body { padding: 1rem 1.1rem 1.1rem; }
 .course-hover-desc {
-  font-size: .85rem;
-  line-height: 1.55;
-  margin-bottom: .5rem;
+  font-size: .88rem;
+  line-height: 1.7;
+  margin-bottom: .75rem;
+  white-space: pre-line;          /* 描述裡的換行會保留 */
 }
 .course-hover-meta {
-  font-size: .82rem;
-  margin-bottom: .3rem;
+  font-size: .85rem;
+  margin-bottom: .35rem;
 }
 .course-hover-teacher {
-  font-size: .8rem;
+  font-size: .83rem;
   color: var(--text-muted);
-  line-height: 1.5;
-  margin-bottom: .5rem;
+  line-height: 1.65;
+  margin-bottom: .6rem;
 }
 .course-name  { font-size: 1.15rem; font-weight: 900; margin-bottom: .5rem; }
 .course-sessions { font-size: .82rem; color: var(--text-muted); margin-bottom: .75rem; line-height: 1.6; }
