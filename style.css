@@ -44,8 +44,10 @@ body {
 }
 .site-logo:hover { opacity: .85; }
 .site-logo-img {
-  height: 40px;
-  width: auto;
+  height: 48px;
+  width: 48px;
+  object-fit: cover;
+  border-radius: 50%;   /* LOGO 是黑底圓框圖案，裁成圓形最自然 */
   display: block;
 }
 
