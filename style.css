@@ -202,7 +202,10 @@ body {
   display: block;
   border-bottom: 3px solid #111;
 }
-.course-hover-body { padding: 1rem 1.1rem 1.1rem; }
+.course-hover-body {
+  padding: 1rem 1.1rem 1.1rem;
+  overflow-wrap: anywhere;   /* 連續英文/數字也強制換行，不會撐出橫向捲軸 */
+}
 .course-hover-desc {
   font-size: .88rem;
   line-height: 1.7;
