@@ -182,7 +182,7 @@
       <h3 id="course-modal-title">新增課程</h3>
 
       <div class="form-group">
-        <label>老師照片（選填，會自動壓縮）</label>
+        <label>封面照片（選填，會自動壓縮）</label>
         <input id="c-photo" type="file" accept="image/*" onchange="handlePhotoUpload(this)">
         <div id="c-photo-preview" class="photo-preview"></div>
       </div>
@@ -215,6 +215,22 @@
       <div class="form-group">
         <label>上課時段（一行一個）</label>
         <textarea id="c-sessions" rows="2" placeholder="每週四 19:00–20:30&#10;每週六 14:00–15:30"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>活動地點</label>
+        <input id="c-location" type="text" placeholder="例：台北市大安區○○街 12 號 B1 舞蹈教室">
+      </div>
+
+      <div class="form-2col">
+        <div class="form-group">
+          <label>師資（老師名字）</label>
+          <input id="c-teacher" type="text" placeholder="例：阿哈老師">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>師資描述</label>
+        <textarea id="c-teacher-desc" rows="3" placeholder="老師的經歷、風格、得獎紀錄…"></textarea>
       </div>
 
       <div class="form-group">

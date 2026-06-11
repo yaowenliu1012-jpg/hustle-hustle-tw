@@ -318,7 +318,7 @@ async function loadCourseList() {
       <div class="course-admin-info">
         <div class="course-admin-name">${c.emoji || ''} ${c.name}</div>
         <div class="course-admin-desc">${c.description || '（無描述）'}</div>
-        <div class="course-admin-plans">${(c.plans || []).map(p => `${p.label} NT$${p.price}`).join('｜')}</div>
+        <div class="course-admin-plans">${c.teacher ? `🧑‍🏫 ${c.teacher}　` : ''}${(c.plans || []).map(p => `${p.label} NT$${p.price}`).join('｜')}</div>
       </div>
       <div class="course-admin-actions">
         <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
@@ -353,6 +353,9 @@ function openCourseForm(courseId = null) {
   document.getElementById('c-desc').value     = c?.description || '';
   document.getElementById('c-desc-en').value  = c?.descriptionEn || '';
   document.getElementById('c-sessions').value = (c?.sessions || []).join('\n');
+  document.getElementById('c-location').value     = c?.location || '';
+  document.getElementById('c-teacher').value      = c?.teacher || '';
+  document.getElementById('c-teacher-desc').value = c?.teacherDesc || '';
   document.getElementById('c-photo').value    = '';
   document.getElementById('c-photo-preview').innerHTML =
     c?.photo ? `<img src="${c.photo}">` : '';
@@ -428,6 +431,9 @@ async function saveCourse() {
     description:   document.getElementById('c-desc').value.trim(),
     descriptionEn: document.getElementById('c-desc-en').value.trim(),
     sessions:      document.getElementById('c-sessions').value.split('\n').map(s => s.trim()).filter(Boolean),
+    location:      document.getElementById('c-location').value.trim(),
+    teacher:       document.getElementById('c-teacher').value.trim(),
+    teacherDesc:   document.getElementById('c-teacher-desc').value.trim(),
     plans,
     photo:  uploadedPhoto !== null ? uploadedPhoto : (existing?.photo || ''),
     order:  existing?.order ?? adminCourses.length,

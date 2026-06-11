@@ -72,11 +72,13 @@ function renderStep1() {
   const main = document.getElementById('main');
   main.innerHTML = `<h2 class="step-title">${t('selectCourse')}</h2>
     <div class="course-grid">
-      ${COURSES.map(c => `
+      ${COURSES.map(c => {
+        const hasDetail = c.photo || c.description || c.teacher || c.location;
+        return `
         <div class="course-card ${state.courseId === c.id ? 'selected' : ''}" data-id="${c.id}">
-          ${c.photo ? `<img class="course-photo" src="${c.photo}" alt="">` : `<div class="course-emoji">${c.emoji || '💃'}</div>`}
+          ${hasDetail ? `<button class="info-btn" data-info="${c.id}" aria-label="課程詳情">ⓘ</button>` : ''}
+          <div class="course-emoji">${c.emoji || '💃'}</div>
           <div class="course-name">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>
-          ${c.description ? `<div class="course-desc">${lang === 'zh' ? c.description : (c.descriptionEn || c.description)}</div>` : ''}
           <div class="course-sessions">
             <strong>${t('sessions')}：</strong>
             ${((lang === 'zh' ? c.sessions : c.sessionsEn) || c.sessions || []).map(s => `<div>${s}</div>`).join('')}
@@ -84,8 +86,18 @@ function renderStep1() {
           <div class="course-prices">
             ${c.plans.map(p => `<span class="price-tag">${lang === 'zh' ? p.label : p.labelEn} NT$${p.price.toLocaleString()}</span>`).join('')}
           </div>
-        </div>
-      `).join('')}
+          ${hasDetail ? `
+          <div class="course-hover">
+            ${c.photo ? `<img class="course-hover-photo" src="${c.photo}" alt="">` : ''}
+            <div class="course-hover-body">
+              ${c.description ? `<p class="course-hover-desc">${lang === 'zh' ? c.description : (c.descriptionEn || c.description)}</p>` : ''}
+              ${c.teacher ? `<p class="course-hover-meta">🧑‍🏫 <strong>${c.teacher}</strong></p>` : ''}
+              ${c.teacherDesc ? `<p class="course-hover-teacher">${c.teacherDesc}</p>` : ''}
+              ${c.location ? `<p class="course-hover-meta">📍 ${c.location}</p>` : ''}
+            </div>
+          </div>` : ''}
+        </div>`;
+      }).join('')}
     </div>
     <div class="btn-row">
       <button class="btn btn-primary" id="step1-next" ${!state.courseId ? 'disabled' : ''} onclick="goStep2()">${t('next')}</button>
@@ -98,6 +110,17 @@ function renderStep1() {
       main.querySelectorAll('.course-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       document.getElementById('step1-next').disabled = false;
+    });
+  });
+
+  // ⓘ 按鈕：手機沒有 hover，點擊切換詳情
+  main.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const card = btn.closest('.course-card');
+      const wasOpen = card.classList.contains('show-info');
+      main.querySelectorAll('.course-card').forEach(c => c.classList.remove('show-info'));
+      if (!wasOpen) card.classList.add('show-info');
     });
   });
 }
