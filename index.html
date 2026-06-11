@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hustle Hustle TW — 課程報名</title>
+<link rel="stylesheet" href="https://unpkg.com/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-c1"></div><div class="hero-c2"></div>
+    <div class="hero-top">
+      <div class="hero-label">Hustle Hustle TW · 2025 Q2</div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('zh')">中文</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+    <h1 id="hero-title">舞蹈課程報名 💃</h1>
+    <p id="hero-sub">選課程 → 選方案 → 填資料 → 匯款</p>
+  </div>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step"><div class="step-num active" id="sn1">1</div><div class="step-label active" id="sl1">選課程</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" id="sn2">2</div><div class="step-label" id="sl2">選方案</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" id="sn3">3</div><div class="step-label" id="sl3">填資料</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" id="sn4">4</div><div class="step-label" id="sl4">匯款</div></div>
+  </div>
+
+  <!-- PAGE 1 -->
+  <div class="page active" id="page1">
+    <p class="section-title" id="p1-title">選擇課程</p>
+    <div class="courses-grid" id="courses-grid"></div>
+    <div id="schedule-section" style="display:none;">
+      <div class="schedule-toggle" onclick="toggleSchedule()">
+        <span id="sched-toggle-label">📅 查看上課時段</span>
+        <i class="ti ti-chevron-down" id="sched-arrow"></i>
+      </div>
+      <div class="schedule-list" id="sched-list"></div>
+      <div class="btn-row"><button class="btn-next" id="btn-p1-next">選擇方案 →</button></div>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page" id="page2">
+    <div class="summary-box">
+      <span class="summary-icon" id="p2-icon"></span>
+      <span class="summary-text"><strong id="p2-course"></strong></span>
+    </div>
+    <p class="section-title" id="p2-title">選擇報名方案</p>
+    <div class="plans-grid" id="plans-grid"></div>
+    <div class="btn-row" style="margin-top:1rem;">
+      <button class="btn-back" id="btn-p2-back" onclick="goPage(1)">← 返回</button>
+      <button class="btn-next" id="btn-p2-next" style="display:none;">填寫資料 →</button>
+    </div>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div class="page" id="page3">
+    <div class="summary-box">
+      <span class="summary-icon" id="p3-icon"></span>
+      <span class="summary-text"><strong id="p3-course"></strong> · <span id="p3-plan"></span></span>
+    </div>
+    <div id="form-fields"></div>
+    <div class="form-card">
+      <div class="form-card-title"><i class="ti ti-gift" aria-hidden="true"></i> <span id="referral-card-title">推薦人（選填）</span></div>
+      <div class="fg full">
+        <label id="referral-label">推薦人姓名</label>
+        <input type="text" id="f-referral" oninput="onReferralInput(this)"/>
+        <p class="note" id="referral-note">由現有學員推薦，可折抵 NT$100</p>
+        <div class="referral-tag" id="referral-tag">
+          <i class="ti ti-tag" aria-hidden="true"></i>
+          <span id="referral-tag-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" id="btn-p3-back" onclick="goPage(2)">← 返回</button>
+      <button class="btn-next" id="btn-p3-next">前往匯款 →</button>
+    </div>
+  </div>
+
+  <!-- PAGE 4 -->
+  <div class="page" id="page4">
+    <div class="summary-box">
+      <span class="summary-icon" id="p4-icon"></span>
+      <span class="summary-text"><strong id="p4-course"></strong> · <span id="p4-plan"></span></span>
+    </div>
+    <div class="confirm-checklist">
+      <div class="checklist-title" id="checklist-title">已填寫資料確認</div>
+      <div id="checklist-items"></div>
+    </div>
+    <div class="price-breakdown">
+      <div class="price-row"><span id="bd-base-label">課程費用</span><span id="bd-base"></span></div>
+      <div class="price-row discount" id="bd-referral-row" style="display:none;">
+        <span id="bd-referral-label"></span><span>－NT$ 100</span>
+      </div>
+      <div class="price-row total"><span id="bd-total-label">實際匯款金額</span><span id="bd-total"></span></div>
+    </div>
+    <div class="payment-hero">
+      <div class="payment-label" id="payment-label">請匯款以下金額</div>
+      <div class="payment-amount" id="pay-amount"></div>
+      <div class="payment-sub" id="payment-sub">匯款後請填寫後五碼完成報名</div>
+    </div>
+    <div class="bank-box">
+      <div class="bank-title" id="bank-title">匯款帳號</div>
+      <div class="bank-row"><span id="bank-label-bank">銀行</span><span id="bank-val-bank">玉山銀行（808）</span></div>
+      <div class="bank-row">
+        <span id="bank-label-acct">帳號</span>
+        <span style="display:flex;align-items:center;gap:8px;"><span id="bank-val-acct">0988-940-123456</span> <button class="copy-btn" onclick="copyAcct()" id="copy-btn">複製</button></span>
+      </div>
+      <div class="bank-row"><span id="bank-label-name">戶名</span><span id="bank-val-name">陳○○</span></div>
+      <div class="bank-row"><span id="bank-label-memo">備註</span><span id="bank-memo"></span></div>
+    </div>
+    <div class="form-card">
+      <div class="form-card-title" id="transfer-card-title">匯款確認</div>
+      <div class="form-grid">
+        <div class="fg full" id="payer-email-wrap" style="display:none;">
+          <label id="payer-email-label">匯款人 Email *</label>
+          <input type="email" id="payer-email"/>
+          <p class="note" id="payer-email-note">請填寫實際完成匯款的那位 Email</p>
+          <div class="err-msg" id="err-payer-email">請填寫匯款人 Email</div>
+        </div>
+        <div class="fg full">
+          <label id="transfer5-label">轉帳後五碼 *</label>
+          <input type="text" id="transfer5" maxlength="5"/>
+          <p class="note" id="transfer5-note">完成匯款後填寫帳號後五碼</p>
+          <div class="err-msg" id="err-transfer5">請填寫 5 位數後五碼</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" id="btn-p4-back" onclick="goPage(3)">← 返回修改資料</button>
+      <button class="btn-next" id="btn-submit" onclick="submitForm()">送出報名 →</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="page" id="page5">
+    <div class="success-wrap">
+      <div style="font-size:56px;">🎉</div>
+      <h3 id="success-title">報名資料已收到！</h3>
+      <p id="success-body">我們將盡快審核您的報名，<br>審核結果會寄送到您的 Email。<br><br>請保留轉帳紀錄截圖，以備核對使用。</p>
+    </div>
+  </div>
+
+</div><!-- .app -->
+
+<script src="config.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
