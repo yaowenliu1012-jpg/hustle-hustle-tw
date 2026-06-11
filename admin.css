@@ -231,6 +231,68 @@ tr:hover td { background: var(--surface); }
 .setting-card h3 { font-size: .95rem; margin-bottom: 1rem; color: var(--muted); font-weight: 600; }
 .settings-note { font-size: .8rem; color: var(--muted); margin-top: 1rem; }
 
+/* ── 課程管理 ─────────────────────────────────────────────── */
+.course-admin-list { display: flex; flex-direction: column; gap: .75rem; }
+.course-admin-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .85rem 1rem;
+}
+.course-admin-photo {
+  width: 72px; height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: var(--surface2);
+}
+.course-admin-emoji {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+}
+.course-admin-info { flex: 1; min-width: 0; }
+.course-admin-name { font-weight: 700; margin-bottom: .2rem; }
+.course-admin-desc {
+  font-size: .82rem; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin-bottom: .2rem;
+}
+.course-admin-plans { font-size: .78rem; color: var(--muted); }
+.course-admin-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+
+.modal-wide { max-width: 640px; }
+.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .55rem .8rem;
+  color: var(--text);
+  font-size: .9rem;
+  font-family: inherit;
+  resize: vertical;
+}
+textarea:focus { outline: none; border-color: var(--brand); }
+.photo-preview img {
+  max-width: 160px;
+  border-radius: 8px;
+  margin-top: .5rem;
+  border: 1px solid var(--border);
+}
+.plan-row {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: .5rem;
+  align-items: center;
+}
+.plan-row .plan-label-input { flex: 2; }
+.plan-row .plan-price-input { flex: 1; }
+input[type="file"] { color: var(--muted); font-size: .85rem; }
+
 /* ── Modal ────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0;

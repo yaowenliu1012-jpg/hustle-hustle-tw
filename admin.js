@@ -284,6 +284,181 @@ function switchTab(tab) {
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 
   if (tab === 'settings') loadSettingsForm();
+  if (tab === 'courses') loadCourseList();
+}
+
+// ════════════════════════════════════════════════════════════
+//  課程管理
+// ════════════════════════════════════════════════════════════
+let adminCourses = [];
+let editingCourseId = null;
+let uploadedPhoto = null;   // base64，null = 沒動過
+
+async function loadCourseList() {
+  const wrap = document.getElementById('course-list');
+  wrap.innerHTML = '<p class="settings-note">載入中...</p>';
+  if (!db) { wrap.innerHTML = '<p class="settings-note">Firebase 未連線</p>'; return; }
+
+  try {
+    const snap = await db.collection('courses').orderBy('order').get();
+    adminCourses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (e) {
+    wrap.innerHTML = `<p class="settings-note">載入失敗：${e.message}</p>`;
+    return;
+  }
+
+  if (!adminCourses.length) {
+    wrap.innerHTML = '<p class="settings-note">還沒有課程，按右上角「＋ 新增課程」建立第一筆。</p>';
+    return;
+  }
+
+  wrap.innerHTML = adminCourses.map((c, i) => `
+    <div class="course-admin-card">
+      ${c.photo ? `<img src="${c.photo}" class="course-admin-photo">` : `<div class="course-admin-photo course-admin-emoji">${c.emoji || '💃'}</div>`}
+      <div class="course-admin-info">
+        <div class="course-admin-name">${c.emoji || ''} ${c.name}</div>
+        <div class="course-admin-desc">${c.description || '（無描述）'}</div>
+        <div class="course-admin-plans">${(c.plans || []).map(p => `${p.label} NT$${p.price}`).join('｜')}</div>
+      </div>
+      <div class="course-admin-actions">
+        <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, 1)" ${i === adminCourses.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="btn btn-primary btn-sm" onclick="openCourseForm('${c.id}')">編輯</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function moveCourse(index, dir) {
+  const a = adminCourses[index];
+  const b = adminCourses[index + dir];
+  if (!a || !b) return;
+  const batch = db.batch();
+  batch.update(db.collection('courses').doc(a.id), { order: index + dir });
+  batch.update(db.collection('courses').doc(b.id), { order: index });
+  await batch.commit();
+  loadCourseList();
+}
+
+// ── 新增 / 編輯表單 ──────────────────────────────────────────
+function openCourseForm(courseId = null) {
+  editingCourseId = courseId;
+  uploadedPhoto = null;
+  const c = courseId ? adminCourses.find(x => x.id === courseId) : null;
+
+  document.getElementById('course-modal-title').textContent = c ? '編輯課程' : '新增課程';
+  document.getElementById('c-name').value     = c?.name || '';
+  document.getElementById('c-name-en').value  = c?.nameEn || '';
+  document.getElementById('c-emoji').value    = c?.emoji || '';
+  document.getElementById('c-desc').value     = c?.description || '';
+  document.getElementById('c-desc-en').value  = c?.descriptionEn || '';
+  document.getElementById('c-sessions').value = (c?.sessions || []).join('\n');
+  document.getElementById('c-photo').value    = '';
+  document.getElementById('c-photo-preview').innerHTML =
+    c?.photo ? `<img src="${c.photo}">` : '';
+  document.getElementById('c-err').textContent = '';
+  document.getElementById('c-delete').style.display = c ? '' : 'none';
+
+  // 方案列
+  const plansWrap = document.getElementById('c-plans');
+  plansWrap.innerHTML = '';
+  (c?.plans?.length ? c.plans : [{ label: '單人', price: '' }]).forEach(p => addPlanRow(p));
+
+  document.getElementById('course-modal-overlay').style.display = 'flex';
+}
+
+function closeCourseForm() {
+  document.getElementById('course-modal-overlay').style.display = 'none';
+  editingCourseId = null;
+}
+
+function addPlanRow(plan = { label: '', price: '' }) {
+  const row = document.createElement('div');
+  row.className = 'plan-row';
+  row.innerHTML = `
+    <input type="text" class="plan-label-input" placeholder="方案名（如：單人）" value="${plan.label || ''}">
+    <input type="number" class="plan-price-input" placeholder="價格" min="0" value="${plan.price ?? ''}">
+    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById('c-plans').appendChild(row);
+}
+
+// ── 照片上傳（壓縮成 base64，存進 Firestore） ─────────────────
+function handlePhotoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    // 壓縮到最寬 600px、JPEG 70%，約 50–150KB，遠低於 Firestore 1MB 文件上限
+    const maxW = 600;
+    const scale = Math.min(1, maxW / img.width);
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    uploadedPhoto = canvas.toDataURL('image/jpeg', 0.7);
+    document.getElementById('c-photo-preview').innerHTML = `<img src="${uploadedPhoto}">`;
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+// ── 儲存課程 ─────────────────────────────────────────────────
+async function saveCourse() {
+  const err = document.getElementById('c-err');
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { err.textContent = '課程名稱為必填'; return; }
+
+  // 收集方案
+  const plans = [];
+  document.querySelectorAll('#c-plans .plan-row').forEach((row, i) => {
+    const label = row.querySelector('.plan-label-input').value.trim();
+    const price = Number(row.querySelector('.plan-price-input').value);
+    if (label && price > 0) {
+      // 雙人方案要顯示 Leader/Follower 欄位，靠 id 判斷
+      const id = label.includes('雙') ? 'duo' : (i === 0 ? 'solo' : 'plan' + i);
+      plans.push({ id, label, labelEn: label, price });
+    }
+  });
+  if (!plans.length) { err.textContent = '至少要有一個方案（名稱＋價格）'; return; }
+
+  const existing = editingCourseId ? adminCourses.find(x => x.id === editingCourseId) : null;
+  const data = {
+    name,
+    nameEn:        document.getElementById('c-name-en').value.trim() || name,
+    emoji:         document.getElementById('c-emoji').value.trim(),
+    description:   document.getElementById('c-desc').value.trim(),
+    descriptionEn: document.getElementById('c-desc-en').value.trim(),
+    sessions:      document.getElementById('c-sessions').value.split('\n').map(s => s.trim()).filter(Boolean),
+    plans,
+    photo:  uploadedPhoto !== null ? uploadedPhoto : (existing?.photo || ''),
+    order:  existing?.order ?? adminCourses.length,
+    active: true,
+  };
+  data.sessionsEn = data.sessions;
+
+  err.textContent = '';
+  try {
+    if (editingCourseId) {
+      await db.collection('courses').doc(editingCourseId).set(data);
+    } else {
+      await db.collection('courses').add(data);
+    }
+    closeCourseForm();
+    loadCourseList();
+  } catch (e) {
+    err.textContent = '儲存失敗：' + e.message;
+  }
+}
+
+async function deleteCourse() {
+  if (!editingCourseId) return;
+  if (!confirm('確定要刪除這個課程嗎？（已報名的資料不會被刪除）')) return;
+  try {
+    await db.collection('courses').doc(editingCourseId).delete();
+    closeCourseForm();
+    loadCourseList();
+  } catch (e) {
+    document.getElementById('c-err').textContent = '刪除失敗：' + e.message;
+  }
 }
 
 // ── 設定（localStorage） ──────────────────────────────────────

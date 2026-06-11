@@ -13,9 +13,13 @@ let state = {
   formData: {},
 };
 
+// 課程清單：優先用 Firestore 後台管理的課程，沒有才用 config.js 的預設值
+let COURSES = SITE_CONFIG.courses;
+
 // ── 初始化 ──────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initFirebase();
+  await loadCourses();
   renderStep1();
   document.getElementById('lang-toggle').addEventListener('click', toggleLang);
 });
@@ -26,6 +30,18 @@ function initFirebase() {
     db = firebase.firestore();
   } catch (e) {
     console.warn('Firebase 尚未設定，報名資料不會儲存到資料庫。');
+  }
+}
+
+async function loadCourses() {
+  if (!db) return;
+  try {
+    const snap = await db.collection('courses').orderBy('order').get();
+    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(c => c.active !== false);
+    if (list.length) COURSES = list;
+  } catch (e) {
+    console.warn('讀取課程失敗，使用預設課程', e);
   }
 }
 
@@ -56,13 +72,14 @@ function renderStep1() {
   const main = document.getElementById('main');
   main.innerHTML = `<h2 class="step-title">${t('selectCourse')}</h2>
     <div class="course-grid">
-      ${SITE_CONFIG.courses.map(c => `
+      ${COURSES.map(c => `
         <div class="course-card ${state.courseId === c.id ? 'selected' : ''}" data-id="${c.id}">
-          <div class="course-emoji">${c.emoji}</div>
-          <div class="course-name">${lang === 'zh' ? c.name : c.nameEn}</div>
+          ${c.photo ? `<img class="course-photo" src="${c.photo}" alt="">` : `<div class="course-emoji">${c.emoji || '💃'}</div>`}
+          <div class="course-name">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>
+          ${c.description ? `<div class="course-desc">${lang === 'zh' ? c.description : (c.descriptionEn || c.description)}</div>` : ''}
           <div class="course-sessions">
             <strong>${t('sessions')}：</strong>
-            ${(lang === 'zh' ? c.sessions : c.sessionsEn).map(s => `<div>${s}</div>`).join('')}
+            ${((lang === 'zh' ? c.sessions : c.sessionsEn) || c.sessions || []).map(s => `<div>${s}</div>`).join('')}
           </div>
           <div class="course-prices">
             ${c.plans.map(p => `<span class="price-tag">${lang === 'zh' ? p.label : p.labelEn} NT$${p.price.toLocaleString()}</span>`).join('')}
@@ -94,7 +111,7 @@ function goStep2() {
 function renderStep2() {
   state.step = 2;
   updateStepIndicator();
-  const course = SITE_CONFIG.courses.find(c => c.id === state.courseId);
+  const course = COURSES.find(c => c.id === state.courseId);
   const main = document.getElementById('main');
   main.innerHTML = `<h2 class="step-title">${t('selectPlan')}</h2>
     <div class="plan-grid">
@@ -243,7 +260,7 @@ function validateStep3() {
 function renderStep4() {
   state.step = 4;
   updateStepIndicator();
-  const course = SITE_CONFIG.courses.find(c => c.id === state.courseId);
+  const course = COURSES.find(c => c.id === state.courseId);
   const plan   = course.plans.find(p => p.id === state.planId);
   const fd     = state.formData;
   const isDuo  = state.planId === 'duo';
@@ -310,7 +327,7 @@ async function submitForm() {
   if (!/^\d{5}$/.test(code)) { err.textContent = t('invalidCode'); return; }
   err.textContent = '';
 
-  const course = SITE_CONFIG.courses.find(c => c.id === state.courseId);
+  const course = COURSES.find(c => c.id === state.courseId);
   const plan   = course.plans.find(p => p.id === state.planId);
   const isDuo  = state.planId === 'duo';
   const fd     = state.formData;
