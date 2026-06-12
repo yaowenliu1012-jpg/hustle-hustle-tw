@@ -384,6 +384,45 @@ input[type="file"] { color: var(--muted); font-size: .85rem; }
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .sidebar { display: none; }
+  /* 手機版：側欄改為頂部橫向選單列 */
+  #admin-screen { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    padding: .5rem .75rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    gap: .25rem;
+  }
+  .sidebar-logo {
+    padding: 0 .5rem 0 0;
+    margin: 0;
+    border-bottom: none;
+    font-size: .85rem;
+    white-space: nowrap;
+  }
+  .sidebar nav {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+  }
+  .nav-item {
+    padding: .5rem .6rem;
+    font-size: .82rem;
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+  }
+  .nav-item.active { border-bottom-color: var(--brand); background: transparent; }
+  .btn-logout {
+    margin: 0;
+    padding: .35rem .6rem;
+    font-size: .78rem;
+    white-space: nowrap;
+  }
   .admin-main { padding: 1rem; }
+  .section-header h1 { font-size: 1.15rem; }
 }
