@@ -170,7 +170,7 @@ function showCourseDetail(courseId) {
         ${c.teacherDesc ? `<p class="detail-teacher">${lang === 'zh' ? c.teacherDesc : (c.teacherDescEn || c.teacherDesc)}</p>` : ''}
         ${c.location ? `<p class="detail-meta">📍 ${lang === 'zh' ? c.location : (c.locationEn || c.location)}</p>` : ''}
         <div class="detail-actions">
-          <button class="btn btn-primary" id="detail-select">${lang === 'zh' ? '選擇此項目' : 'Select'}</button>
+          <button class="btn btn-primary" id="detail-select">${lang === 'zh' ? '報名' : 'Register'}</button>
         </div>
       </div>
     </div>`;
@@ -181,12 +181,12 @@ function showCourseDetail(courseId) {
   overlay.addEventListener('click', e => { if (e.target === overlay) closeCourseDetail(); });
   overlay.querySelector('.detail-close').addEventListener('click', closeCourseDetail);
 
-  // 「選擇此項目」：選取並關閉
+  // 「報名」：選取並直接進入選方案
   overlay.querySelector('#detail-select').addEventListener('click', () => {
     state.courseId = c.id;
     state.planId = null;
     closeCourseDetail();
-    renderStep1();
+    renderStep2();
   });
 }
 
