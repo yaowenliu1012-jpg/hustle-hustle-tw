@@ -33,8 +33,14 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
+  /* 米白底壓橘紅斜線（海報紋理感） */
   background: var(--bg);
-  border-bottom: 4px solid var(--brand);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(226, 103, 75, .28) 0 3px,
+    transparent 3px 16px
+  );
+  border-bottom: 4px solid #111;
 }
 .site-logo {
   font-size: 1.25rem;
