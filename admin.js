@@ -435,6 +435,14 @@ function openCourseForm(courseId = null, type = 'course') {
 
   const typeName = editingType === 'event' ? '活動' : '課程';
   document.getElementById('course-modal-title').textContent = c ? `編輯${typeName}` : `新增${typeName}`;
+
+  // 依類型切換欄位標題（課程 / 活動）
+  const isEvent = editingType === 'event';
+  document.getElementById('lbl-name').textContent        = `${typeName}名稱 *`;
+  document.getElementById('lbl-name-en').textContent     = isEvent ? 'Event Name' : 'Course Name';
+  document.getElementById('lbl-desc').textContent        = `${typeName}描述`;
+  document.getElementById('lbl-sessions').textContent    = isEvent ? '活動時間（一行一個）' : '上課時段（一行一個）';
+  document.getElementById('lbl-sessions-en').textContent = isEvent ? 'Event Times (one per line)' : 'Class Times (one per line)';
   document.getElementById('c-name').value     = c?.name || '';
   document.getElementById('c-emoji').value    = c?.emoji || '';
   document.getElementById('c-desc').value     = c?.description || '';

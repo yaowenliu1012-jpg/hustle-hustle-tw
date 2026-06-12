@@ -95,7 +95,7 @@ function renderCourseGroup(list, heading) {
           <div class="course-emoji">${c.emoji || '💃'}</div>
           <div class="course-name">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>
           <div class="course-sessions">
-            <strong>${t('sessions')}：</strong>
+            <strong>${c.type === 'event' ? (lang === 'zh' ? '活動時間' : 'Event Times') : t('sessions')}：</strong>
             ${((lang === 'zh' ? c.sessions : c.sessionsEn) || c.sessions || []).map(s => `<div>${s}</div>`).join('')}
           </div>
           <div class="course-prices">
