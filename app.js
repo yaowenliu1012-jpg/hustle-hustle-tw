@@ -116,6 +116,7 @@ function renderCourseGroup(list, heading) {
         const hasDetail = c.photo || c.description || c.teacher || c.location;
         return `
         <div class="course-card ${state.courseId === c.id ? 'selected' : ''}" data-id="${c.id}">
+          ${hasDetail ? `<button class="info-btn" data-info="${c.id}" aria-label="課程詳情">ⓘ</button>` : ''}
           <div class="course-name">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>
           <div class="course-sessions">
             <strong>${c.type === 'event' ? (lang === 'zh' ? '活動時間' : 'Event Times') : t('sessions')}：</strong>
