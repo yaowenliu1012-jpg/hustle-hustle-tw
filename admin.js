@@ -30,7 +30,6 @@ function doLogin() {
     document.getElementById('admin-screen').style.display = 'flex';
     initFirebase();
     loadRegistrations();
-    populateCourseFilter();
   } else {
     document.getElementById('login-err').textContent = '密碼錯誤';
   }
@@ -65,6 +64,7 @@ async function loadRegistrations() {
   try {
     const snap = await db.collection('registrations').orderBy('createdAt', 'desc').get();
     allRegistrations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    populateCourseFilter();
     applyFilters();
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="13" class="loading-cell">載入失敗：${e.message}</td></tr>`;
@@ -77,6 +77,7 @@ function showDemoData() {
     { id: 'demo1', createdAt: new Date().toISOString(), courseName: '進階班', planName: '單人', name: '王小明', phone: '0912345678', email: 'test@example.com', role: 'Leader', total: 1900, transferCode: '12345', referral: '李教練', status: 'pending' },
     { id: 'demo2', createdAt: new Date().toISOString(), courseName: '寶寶班', planName: '雙人', leaderName: '張三', leaderPhone: '0987654321', leaderEmail: 'a@a.com', followerName: '李四', followerPhone: '0911111111', followerEmail: 'b@b.com', payerEmail: 'a@a.com', total: 3400, transferCode: '67890', referral: '', status: 'approved' },
   ];
+  populateCourseFilter();
   applyFilters();
 }
 
@@ -149,12 +150,16 @@ function renderStats() {
 
 function populateCourseFilter() {
   const sel = document.getElementById('filter-course');
-  SITE_CONFIG.courses.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.name;
-    opt.textContent = `${c.emoji} ${c.name}`;
-    sel.appendChild(opt);
-  });
+  const current = sel.value;
+
+  // 從實際報名資料抓出所有課程/活動名稱（包含已刪除的課程，舊資料仍可篩選）
+  const names = [...new Set(allRegistrations.map(r => r.courseName).filter(Boolean))];
+
+  sel.innerHTML = '<option value="">全部課程／活動</option>' +
+    names.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
+
+  // 重新整理後保留原本選的篩選
+  if (names.includes(current)) sel.value = current;
 }
 
 // ── 查看 / 審核 Modal ─────────────────────────────────────────
