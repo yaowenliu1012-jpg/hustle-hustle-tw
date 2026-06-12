@@ -275,7 +275,13 @@ tr:hover td { background: var(--surface); }
   vertical-align: middle;
 }
 
-.modal-wide { max-width: 640px; }
+.modal-wide { max-width: 780px; }
+
+@media (max-width: 640px) {
+  /* 窄螢幕改回上下排列，中文在上英文在下 */
+  .form-2col { grid-template-columns: 1fr; }
+  .bilingual-header { display: none; }
+}
 .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 textarea {
   width: 100%;
@@ -295,26 +301,20 @@ textarea:focus { outline: none; border-color: var(--brand); }
   margin-top: .5rem;
   border: 1px solid var(--border);
 }
-/* 英文版收合區塊 */
-.en-section {
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  margin: 1.25rem 0 1rem;
-  background: var(--surface2);
+/* 中英左右對照 */
+.bilingual-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+  margin: 1.25rem 0 .6rem;
+  padding-bottom: .4rem;
+  border-bottom: 1px solid var(--border);
 }
-.en-section summary {
-  cursor: pointer;
-  padding: .7rem 1rem;
-  font-size: .85rem;
-  font-weight: 600;
+.bilingual-header span {
+  font-size: .8rem;
+  font-weight: 700;
   color: var(--muted);
-  user-select: none;
-  list-style: none;
 }
-.en-section summary::before { content: '▸ '; }
-.en-section[open] summary::before { content: '▾ '; }
-.en-section summary:hover { color: var(--text); }
-.en-fields { padding: .5rem 1rem 1rem; }
 
 .plan-row {
   display: flex;

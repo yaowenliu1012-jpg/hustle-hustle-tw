@@ -404,9 +404,6 @@ function openCourseForm(courseId = null) {
   document.getElementById('c-location-en').value     = c?.locationEn || '';
   document.getElementById('c-teacher-en').value      = c?.teacherEn || '';
   document.getElementById('c-teacher-desc-en').value = c?.teacherDescEn || '';
-  // 有填過英文就自動展開區塊
-  document.querySelector('.en-section').open =
-    !!(document.getElementById('c-name-en').value || c?.descriptionEn || enSessions || c?.locationEn || c?.teacherEn || c?.teacherDescEn);
   document.getElementById('c-photo').value    = '';
   document.getElementById('c-photo-preview').innerHTML =
     c?.photo ? `<img src="${c.photo}">` : '';
