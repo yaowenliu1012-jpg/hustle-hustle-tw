@@ -2,11 +2,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --brand:       #ff4d12;   /* 橘紅 */
-  --brand-dark:  #d63a05;
-  --bg:          #ffe600;   /* 螢光黃 */
+  --brand:       #e2674b;   /* 珊瑚橘紅（海報主色） */
+  --brand-dark:  #c04e33;
+  --bg:          #f7efdf;   /* 奶油米白（海報底色） */
+  --mustard:     #edbe4b;   /* 芥末黃點綴 */
+  --dustblue:    #7fa8bd;   /* 灰藍點綴 */
   --surface:     #fff;
-  --surface2:    #fff8c4;
+  --surface2:    #f6e8cb;
   --border:      #111;
   --text:        #111;
   --text-muted:  #555;
@@ -17,7 +19,10 @@
 
 body {
   font-family: 'Noto Sans TC', 'Helvetica Neue', Arial, sans-serif;
+  /* 奶油底＋細點點網紋（halftone），呼應海報質感 */
   background: var(--bg);
+  background-image: radial-gradient(rgba(17, 17, 17, .06) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
   color: var(--text);
   min-height: 100vh;
 }
@@ -135,11 +140,12 @@ body {
 .course-banner {
   display: table;
   margin: -0.75rem auto 1.5rem;
-  background: #111;
-  color: var(--bg);
+  background: var(--mustard);
+  color: #111;
+  border: 3px solid #111;
   font-weight: 800;
   font-size: .95rem;
-  padding: .4rem 1.2rem;
+  padding: .35rem 1.2rem;
   border-radius: 30px;
 }
 
@@ -170,7 +176,7 @@ body {
   font-weight: 900;
   margin: 1.5rem 0 .9rem;
   padding-left: .75rem;
-  border-left: 6px solid #111;
+  border-left: 6px solid var(--dustblue);
 }
 
 /* ── Course Cards ─────────────────────────────────────────── */
