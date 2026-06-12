@@ -58,7 +58,7 @@ function initFirebase() {
 // ── 載入報名資料 ──────────────────────────────────────────────
 async function loadRegistrations() {
   const tbody = document.getElementById('reg-tbody');
-  tbody.innerHTML = '<tr><td colspan="12" class="loading-cell">載入中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="13" class="loading-cell">載入中...</td></tr>';
 
   if (!db) { showDemoData(); return; }
 
@@ -67,7 +67,7 @@ async function loadRegistrations() {
     allRegistrations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     applyFilters();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="12" class="loading-cell">載入失敗：${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" class="loading-cell">載入失敗：${e.message}</td></tr>`;
   }
 }
 
@@ -93,12 +93,15 @@ function applyFilters() {
 
   renderTable(filtered);
   renderStats();
+  const master = document.getElementById('select-all');
+  if (master) { master.checked = false; }
+  updateBulkBar();
 }
 
 function renderTable(rows) {
   const tbody = document.getElementById('reg-tbody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="12" class="loading-cell">沒有資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" class="loading-cell">沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r => {
@@ -108,6 +111,7 @@ function renderTable(rows) {
     const email = isDuo ? r.payerEmail  : r.email;
     const date  = new Date(r.createdAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
     return `<tr>
+      <td><input type="checkbox" class="row-check" data-id="${r.id}" onchange="updateBulkBar()"></td>
       <td>${date}</td>
       <td>${r.courseName}</td>
       <td>${r.planName}</td>
@@ -248,6 +252,41 @@ async function deleteRegistration() {
   allRegistrations = allRegistrations.filter(x => x.id !== currentDocId);
   closeModal();
   applyFilters();
+}
+
+// ── 批次勾選刪除 ─────────────────────────────────────────────
+function toggleSelectAll(master) {
+  document.querySelectorAll('.row-check').forEach(cb => cb.checked = master.checked);
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const n = document.querySelectorAll('.row-check:checked').length;
+  const btn = document.getElementById('btn-bulk-delete');
+  btn.style.display = n ? '' : 'none';
+  btn.textContent = `🗑 刪除勾選（${n}）`;
+}
+
+async function bulkDelete() {
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
+  if (!ids.length) return;
+  if (!confirm(`確定要刪除勾選的 ${ids.length} 筆報名資料嗎？\n刪除後無法復原！`)) return;
+
+  if (db) {
+    try {
+      const batch = db.batch();
+      ids.filter(id => !id.startsWith('demo'))
+         .forEach(id => batch.delete(db.collection('registrations').doc(id)));
+      await batch.commit();
+    } catch (e) {
+      alert('刪除失敗：' + e.message); return;
+    }
+  }
+
+  allRegistrations = allRegistrations.filter(r => !ids.includes(r.id));
+  document.getElementById('select-all').checked = false;
+  applyFilters();
+  updateBulkBar();
 }
 
 // ── Email 通知（透過 Resend） ────────────────────────────────

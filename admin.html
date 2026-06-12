@@ -53,6 +53,7 @@
             <select id="filter-course" onchange="applyFilters()">
               <option value="">全部課程</option>
             </select>
+            <button class="btn btn-danger" id="btn-bulk-delete" onclick="bulkDelete()" style="display:none">🗑 刪除勾選</button>
             <button class="btn btn-secondary" onclick="exportExcel()">匯出 Excel</button>
             <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
           </div>
@@ -64,6 +65,7 @@
           <table id="reg-table">
             <thead>
               <tr>
+                <th><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
                 <th>時間</th>
                 <th>課程</th>
                 <th>方案</th>
@@ -79,7 +81,7 @@
               </tr>
             </thead>
             <tbody id="reg-tbody">
-              <tr><td colspan="12" class="loading-cell">載入中...</td></tr>
+              <tr><td colspan="13" class="loading-cell">載入中...</td></tr>
             </tbody>
           </table>
         </div>
