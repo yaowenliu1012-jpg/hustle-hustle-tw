@@ -33,13 +33,11 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  /* 實色淡橘紅底壓橘紅斜線（海報紋理感） */
+  /* 實色淡橘紅底壓橘紅細格線（方格紙感） */
   background: #f4d4c1;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(226, 103, 75, .7) 0 4px,
-    transparent 4px 12px
-  );
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(226, 103, 75, .7) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(90deg, rgba(226, 103, 75, .7) 0 1px, transparent 1px 14px);
   border-bottom: 4px solid #111;
 }
 .site-logo {
