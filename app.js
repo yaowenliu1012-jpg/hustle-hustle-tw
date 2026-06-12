@@ -130,6 +130,13 @@ function goStep2() {
   renderStep2();
 }
 
+// 目前報名中的課程標示（顯示在步驟 2、3 的標題下方）
+function courseBanner() {
+  const c = COURSES.find(x => x.id === state.courseId);
+  if (!c) return '';
+  return `<div class="course-banner">${c.emoji || ''} ${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>`;
+}
+
 // ── Step 2：選方案 ───────────────────────────────────────────
 function renderStep2() {
   state.step = 2;
@@ -137,6 +144,7 @@ function renderStep2() {
   const course = COURSES.find(c => c.id === state.courseId);
   const main = document.getElementById('main');
   main.innerHTML = `<h2 class="step-title">${t('selectPlan')}</h2>
+    ${courseBanner()}
     <div class="plan-grid">
       ${course.plans.map(p => `
         <div class="plan-card ${state.planId === p.id ? 'selected' : ''}" data-id="${p.id}">
@@ -176,6 +184,7 @@ function renderStep3() {
   const referralOn = course?.referralEnabled !== false;
 
   main.innerHTML = `<h2 class="step-title">${t('fillInfo')}</h2>
+    ${courseBanner()}
     <form id="reg-form" novalidate>
       ${isDuo ? `
         <fieldset><legend>${t('leaderInfo')}</legend>

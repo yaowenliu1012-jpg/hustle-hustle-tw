@@ -131,6 +131,18 @@ body {
   text-transform: uppercase;
 }
 
+/* 目前報名課程的標示 */
+.course-banner {
+  display: table;
+  margin: -0.75rem auto 1.5rem;
+  background: #111;
+  color: var(--bg);
+  font-weight: 800;
+  font-size: .95rem;
+  padding: .4rem 1.2rem;
+  border-radius: 30px;
+}
+
 /* ── Course Cards ─────────────────────────────────────────── */
 .course-grid {
   display: grid;
