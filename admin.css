@@ -262,6 +262,18 @@ tr:hover td { background: var(--surface); }
 }
 .course-admin-plans { font-size: .78rem; color: var(--muted); }
 .course-admin-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+.course-admin-card.course-hidden { opacity: .45; }
+.hidden-tag {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--warning);
+  background: #3d2f00;
+  border-radius: 20px;
+  padding: .12rem .5rem;
+  margin-left: .35rem;
+  vertical-align: middle;
+}
 
 .modal-wide { max-width: 640px; }
 .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }

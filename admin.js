@@ -338,11 +338,13 @@ async function loadCourseList() {
     return;
   }
 
-  wrap.innerHTML = adminCourses.map((c, i) => `
-    <div class="course-admin-card">
+  wrap.innerHTML = adminCourses.map((c, i) => {
+    const hidden = c.active === false;
+    return `
+    <div class="course-admin-card ${hidden ? 'course-hidden' : ''}">
       ${c.photo ? `<img src="${c.photo}" class="course-admin-photo">` : `<div class="course-admin-photo course-admin-emoji">${c.emoji || '💃'}</div>`}
       <div class="course-admin-info">
-        <div class="course-admin-name">${c.emoji || ''} ${c.name}</div>
+        <div class="course-admin-name">${c.emoji || ''} ${c.name} ${hidden ? '<span class="hidden-tag">已隱藏</span>' : ''}</div>
         <div class="course-admin-desc">${c.description || '（無描述）'}</div>
         <div class="course-admin-plans">${c.teacher ? `🧑‍🏫 ${c.teacher}　` : ''}${(c.plans || []).map(p => `${p.label} NT$${p.price}`).join('｜')}</div>
       </div>
@@ -350,9 +352,21 @@ async function loadCourseList() {
         <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
         <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, 1)" ${i === adminCourses.length - 1 ? 'disabled' : ''}>↓</button>
         <button class="btn btn-primary btn-sm" onclick="openCourseForm('${c.id}')">編輯</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleCourseActive('${c.id}')">${hidden ? '顯示' : '隱藏'}</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+async function toggleCourseActive(courseId) {
+  const c = adminCourses.find(x => x.id === courseId);
+  if (!c) return;
+  try {
+    await db.collection('courses').doc(courseId).update({ active: c.active === false });
+    loadCourseList();
+  } catch (e) {
+    alert('切換失敗：' + e.message);
+  }
 }
 
 async function moveCourse(index, dir) {
@@ -463,7 +477,7 @@ async function saveCourse() {
     plans,
     photo:  uploadedPhoto !== null ? uploadedPhoto : (existing?.photo || ''),
     order:  existing?.order ?? adminCourses.length,
-    active: true,
+    active: existing ? existing.active !== false : true,   // 保留原本的顯示/隱藏狀態
   };
   data.sessionsEn = data.sessions;
 
