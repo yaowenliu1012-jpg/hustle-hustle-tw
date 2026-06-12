@@ -186,10 +186,9 @@ function renderStep3() {
           ${field('follower_name',  t('name'),  fd.follower_name,  'text')}
           ${field('follower_phone', t('phone'), fd.follower_phone, 'tel')}
         </fieldset>
-        <fieldset>
-          ${field('payer_email', t('payerEmail'), fd.payer_email, 'email')}
-          ${referralOn ? field('referral', t('referral'), fd.referral, 'text', false) : ''}
-        </fieldset>
+        ${referralOn ? `<fieldset>
+          ${field('referral', t('referral'), fd.referral, 'text', false)}
+        </fieldset>` : ''}
       ` : `
         <fieldset>
           ${field('solo_name',  t('name'),  fd.solo_name,  'text')}
@@ -248,7 +247,6 @@ function validateStep3() {
     check('leader_phone',   validPhone);
     check('follower_name',  notEmpty);
     check('follower_phone', validPhone);
-    check('payer_email',    validEmail);
   } else {
     check('solo_name',  notEmpty);
     check('solo_phone', validPhone);
@@ -264,7 +262,7 @@ function validateStep3() {
 
   // 儲存資料
   if (isDuo) {
-    ['leader_name','leader_phone','follower_name','follower_phone','payer_email','referral'].forEach(id => {
+    ['leader_name','leader_phone','follower_name','follower_phone','referral'].forEach(id => {
       state.formData[id] = document.getElementById(id)?.value.trim() || '';
     });
   } else {
@@ -299,7 +297,6 @@ function renderStep4() {
         ${isDuo ? `
           <tr><td>Leader</td><td>${fd.leader_name} / ${fd.leader_phone}</td></tr>
           <tr><td>Follower</td><td>${fd.follower_name} / ${fd.follower_phone}</td></tr>
-          <tr><td>${t('payerEmail')}</td><td>${fd.payer_email}</td></tr>
         ` : `
           <tr><td>${t('name')}</td><td>${fd.solo_name}</td></tr>
           <tr><td>${t('phone')}</td><td>${fd.solo_phone}</td></tr>
@@ -321,7 +318,14 @@ function renderStep4() {
       <div><strong>${t('bankHolder')}：</strong>${SITE_CONFIG.bank.holder}</div>
     </div>
 
+    ${isDuo ? `
     <div class="form-group" style="margin-top:1.5rem">
+      <label for="payer-email">${t('payerEmail')} <span class="req">*</span></label>
+      <input id="payer-email" type="email" value="${escHtml(fd.payer_email)}" autocomplete="off">
+      <span class="error-msg" id="err-payer-email"></span>
+    </div>` : ''}
+
+    <div class="form-group" ${isDuo ? '' : 'style="margin-top:1.5rem"'}>
       <label for="transfer-code">${t('transferCode')} <span class="req">*</span></label>
       <input id="transfer-code" type="text" inputmode="numeric" maxlength="5" placeholder="12345">
       <span class="error-msg" id="err-transfer-code"></span>
@@ -343,6 +347,17 @@ function copyAccount() {
 
 // ── 送出報名 ─────────────────────────────────────────────────
 async function submitForm() {
+  // 雙人報名：先驗證匯款人 Email
+  const payerInput = document.getElementById('payer-email');
+  if (payerInput) {
+    const payerErr = document.getElementById('err-payer-email');
+    const v = payerInput.value.trim();
+    if (!v) { payerErr.textContent = t('required'); payerInput.focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { payerErr.textContent = t('invalidEmail'); payerInput.focus(); return; }
+    payerErr.textContent = '';
+    state.formData.payer_email = v;
+  }
+
   const code = document.getElementById('transfer-code').value.trim();
   const err  = document.getElementById('err-transfer-code');
   if (!/^\d{5}$/.test(code)) { err.textContent = t('invalidCode'); return; }
