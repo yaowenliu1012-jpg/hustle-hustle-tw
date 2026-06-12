@@ -125,16 +125,6 @@ function renderCourseGroup(list, heading) {
           <div class="course-prices">
             ${c.plans.map(p => `<span class="price-tag">${lang === 'zh' ? p.label : p.labelEn} NT$${p.price.toLocaleString()}</span>`).join('')}
           </div>
-          ${hasDetail ? `
-          <div class="course-hover">
-            ${c.photo ? `<img class="course-hover-photo" src="${c.photo}" alt="">` : ''}
-            <div class="course-hover-body">
-              ${c.description ? `<p class="course-hover-desc">${lang === 'zh' ? c.description : (c.descriptionEn || c.description)}</p>` : ''}
-              ${c.teacher ? `<p class="course-hover-meta">🧑‍🏫 <strong>${lang === 'zh' ? c.teacher : (c.teacherEn || c.teacher)}</strong></p>` : ''}
-              ${c.teacherDesc ? `<p class="course-hover-teacher">${lang === 'zh' ? c.teacherDesc : (c.teacherDescEn || c.teacherDesc)}</p>` : ''}
-              ${c.location ? `<p class="course-hover-meta">📍 ${lang === 'zh' ? c.location : (c.locationEn || c.location)}</p>` : ''}
-            </div>
-          </div>` : ''}
         </div>`;
       }).join('')}
     </div>`;
@@ -151,16 +141,58 @@ function bindCourseCards(main) {
     });
   });
 
-  // ⓘ 按鈕：手機沒有 hover，點擊切換詳情
+  // ⓘ 按鈕：點擊開啟詳情彈窗
   main.querySelectorAll('.info-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      const card = btn.closest('.course-card');
-      const wasOpen = card.classList.contains('show-info');
-      main.querySelectorAll('.course-card').forEach(c => c.classList.remove('show-info'));
-      if (!wasOpen) card.classList.add('show-info');
+      showCourseDetail(btn.dataset.info);
     });
   });
+}
+
+// ── 課程詳情彈窗 ─────────────────────────────────────────────
+function showCourseDetail(courseId) {
+  const c = COURSES.find(x => x.id === courseId);
+  if (!c) return;
+
+  closeCourseDetail();   // 避免重複開啟
+
+  const overlay = document.createElement('div');
+  overlay.className = 'detail-overlay';
+  overlay.id = 'course-detail-overlay';
+  overlay.innerHTML = `
+    <div class="detail-modal">
+      <button class="detail-close" aria-label="close">✕</button>
+      ${c.photo ? `<img class="detail-photo" src="${c.photo}" alt="">` : ''}
+      <div class="detail-body">
+        <h3 class="detail-title">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</h3>
+        ${c.description ? `<p class="detail-desc">${lang === 'zh' ? c.description : (c.descriptionEn || c.description)}</p>` : ''}
+        ${c.teacher ? `<p class="detail-meta">🧑‍🏫 <strong>${lang === 'zh' ? c.teacher : (c.teacherEn || c.teacher)}</strong></p>` : ''}
+        ${c.teacherDesc ? `<p class="detail-teacher">${lang === 'zh' ? c.teacherDesc : (c.teacherDescEn || c.teacherDesc)}</p>` : ''}
+        ${c.location ? `<p class="detail-meta">📍 ${lang === 'zh' ? c.location : (c.locationEn || c.location)}</p>` : ''}
+        <div class="detail-actions">
+          <button class="btn btn-primary" id="detail-select">${lang === 'zh' ? '選擇此項目' : 'Select'}</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  // 點背景或 ✕ 關閉
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeCourseDetail(); });
+  overlay.querySelector('.detail-close').addEventListener('click', closeCourseDetail);
+
+  // 「選擇此項目」：選取並關閉
+  overlay.querySelector('#detail-select').addEventListener('click', () => {
+    state.courseId = c.id;
+    state.planId = null;
+    closeCourseDetail();
+    renderStep1();
+  });
+}
+
+function closeCourseDetail() {
+  document.getElementById('course-detail-overlay')?.remove();
 }
 
 function goStep2() {

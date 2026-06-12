@@ -213,58 +213,79 @@ body {
 }
 .course-card.selected .info-btn { background: #fff; }
 
-.course-hover {
-  position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  min-height: calc(100% + 6px);   /* 至少蓋滿卡片，內容多就往下長 */
-  height: auto;
+/* 詳情彈窗 */
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+.detail-modal {
+  position: relative;
   background: #fff;
   border: 3px solid #111;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .2s;
-  z-index: 10;                    /* 蓋過下方其他卡片 */
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
   color: #111;
-  overflow: hidden;
 }
-.course-card:hover { z-index: 20; }
-.course-card:hover .course-hover,
-.course-card.show-info { z-index: 20; }
-.course-card:hover .course-hover,
-.course-card.show-info .course-hover {
-  opacity: 1;
-  visibility: visible;
+.detail-close {
+  position: absolute;
+  top: .7rem; right: .7rem;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 3px solid #111;
+  background: var(--bg);
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 2;
 }
-.course-hover-photo {
+.detail-close:hover { background: var(--brand); color: #fff; }
+.detail-photo {
   width: 100%;
   aspect-ratio: 1 / 1;   /* 正方形比例，超出部分自動置中裁切 */
   object-fit: cover;
   display: block;
   border-bottom: 3px solid #111;
 }
-.course-hover-body {
-  padding: 1rem 1.1rem 1.1rem;
-  overflow-wrap: anywhere;   /* 連續英文/數字也強制換行，不會撐出橫向捲軸 */
+.detail-body {
+  padding: 1.1rem 1.25rem 1.25rem;
+  overflow-wrap: anywhere;   /* 連續英文/數字也強制換行 */
 }
-.course-hover-desc {
-  font-size: .88rem;
-  line-height: 1.7;
+.detail-title {
+  font-size: 1.2rem;
+  font-weight: 900;
   margin-bottom: .75rem;
-  white-space: pre-line;          /* 描述裡的換行會保留 */
 }
-.course-hover-meta {
-  font-size: .85rem;
-  margin-bottom: .35rem;
+.detail-desc {
+  font-size: .9rem;
+  line-height: 1.7;
+  margin-bottom: .8rem;
+  white-space: pre-line;     /* 描述裡的換行會保留 */
 }
-.course-hover-teacher {
-  font-size: .83rem;
+.detail-meta {
+  font-size: .88rem;
+  margin-bottom: .4rem;
+}
+.detail-teacher {
+  font-size: .84rem;
   color: var(--text-muted);
   line-height: 1.65;
-  margin-bottom: .6rem;
+  margin-bottom: .65rem;
+}
+.detail-actions {
+  margin-top: 1.1rem;
+  display: flex;
+  justify-content: flex-end;
 }
 .course-name  { font-size: 1.15rem; font-weight: 900; margin-bottom: .5rem; }
 .course-sessions { font-size: .82rem; color: var(--text-muted); margin-bottom: .75rem; line-height: 1.6; }
