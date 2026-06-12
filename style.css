@@ -37,8 +37,8 @@ body {
   background: var(--bg);
   background-image: repeating-linear-gradient(
     -45deg,
-    var(--brand) 0 3px,
-    transparent 3px 16px
+    rgba(226, 103, 75, .5) 0 4px,
+    transparent 4px 16px
   );
   border-bottom: 4px solid #111;
 }
