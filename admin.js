@@ -404,6 +404,7 @@ function openCourseForm(courseId = null) {
   document.getElementById('c-location-en').value     = c?.locationEn || '';
   document.getElementById('c-teacher-en').value      = c?.teacherEn || '';
   document.getElementById('c-teacher-desc-en').value = c?.teacherDescEn || '';
+  document.getElementById('c-referral').checked = c ? c.referralEnabled !== false : true;
   document.getElementById('c-photo').value    = '';
   document.getElementById('c-photo-preview').innerHTML =
     c?.photo ? `<img src="${c.photo}">` : '';
@@ -491,6 +492,7 @@ async function saveCourse() {
     teacherDescEn:  document.getElementById('c-teacher-desc-en').value.trim(),
     plans,
     photo:  uploadedPhoto !== null ? uploadedPhoto : (existing?.photo || ''),
+    referralEnabled: document.getElementById('c-referral').checked,
     order:  existing?.order ?? adminCourses.length,
     active: existing ? existing.active !== false : true,   // 保留原本的顯示/隱藏狀態
   };

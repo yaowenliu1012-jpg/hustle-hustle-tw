@@ -326,6 +326,19 @@ textarea:focus { outline: none; border-color: var(--brand); }
 .plan-row .plan-label-en-input { flex: 2; }
 .plan-row .plan-price-input { flex: 1; min-width: 80px; }
 input[type="file"] { color: var(--muted); font-size: .85rem; }
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: .5rem;
+  cursor: pointer;
+  color: var(--text) !important;
+  font-size: .88rem !important;
+}
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
 
 /* ── Modal ────────────────────────────────────────────────── */
 .modal-overlay {
