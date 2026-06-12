@@ -58,7 +58,7 @@ function initFirebase() {
 // ── 載入報名資料 ──────────────────────────────────────────────
 async function loadRegistrations() {
   const tbody = document.getElementById('reg-tbody');
-  tbody.innerHTML = '<tr><td colspan="11" class="loading-cell">載入中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="12" class="loading-cell">載入中...</td></tr>';
 
   if (!db) { showDemoData(); return; }
 
@@ -67,7 +67,7 @@ async function loadRegistrations() {
     allRegistrations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     applyFilters();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="11" class="loading-cell">載入失敗：${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="loading-cell">載入失敗：${e.message}</td></tr>`;
   }
 }
 
@@ -98,7 +98,7 @@ function applyFilters() {
 function renderTable(rows) {
   const tbody = document.getElementById('reg-tbody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="11" class="loading-cell">沒有資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" class="loading-cell">沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r => {
@@ -118,6 +118,7 @@ function renderTable(rows) {
       <td>${r.transferCode}</td>
       <td>${r.referral || '—'}</td>
       <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
+      <td>${r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}</td>
       <td>
         <button class="btn btn-secondary btn-sm" onclick="openModal('${r.id}')">查看</button>
       </td>
@@ -173,6 +174,7 @@ function openModal(docId) {
     ['推薦人', r.referral || '—'],
     ['狀態', statusLabel(r.status)],
     ['報名時間', new Date(r.createdAt).toLocaleString('zh-TW')],
+    ...(r.reviewedAt ? [['審核時間', new Date(r.reviewedAt).toLocaleString('zh-TW')]] : []),
   ] : [
     ['課程', r.courseName], ['方案', r.planName],
     ['姓名', r.name], ['電話', r.phone], ['Email', r.email], ['角色', r.role],
@@ -181,6 +183,7 @@ function openModal(docId) {
     ['推薦人', r.referral || '—'],
     ['狀態', statusLabel(r.status)],
     ['報名時間', new Date(r.createdAt).toLocaleString('zh-TW')],
+    ...(r.reviewedAt ? [['審核時間', new Date(r.reviewedAt).toLocaleString('zh-TW')]] : []),
   ];
 
   document.getElementById('modal-body').innerHTML = `
@@ -205,15 +208,17 @@ async function updateStatus(newStatus) {
   const r = allRegistrations.find(x => x.id === currentDocId);
   if (!r) return;
 
+  const reviewedAt = new Date().toISOString();
   if (db && !currentDocId.startsWith('demo')) {
     try {
-      await db.collection('registrations').doc(currentDocId).update({ status: newStatus });
+      await db.collection('registrations').doc(currentDocId).update({ status: newStatus, reviewedAt });
     } catch (e) {
       alert('更新失敗：' + e.message); return;
     }
   }
 
   r.status = newStatus;
+  r.reviewedAt = reviewedAt;
   closeModal();
   applyFilters();
 
@@ -273,7 +278,7 @@ async function sendStatusEmail(toEmail, name, courseName, status) {
 
 // ── 匯出 Excel（CSV） ────────────────────────────────────────
 function exportExcel() {
-  const headers = ['報名時間','課程','方案','姓名/Leader','電話','Email','角色','Follower','Follower電話','Follower Email','匯款人Email','金額','後五碼','推薦人','狀態'];
+  const headers = ['報名時間','課程','方案','姓名/Leader','電話','Email','角色','Follower','Follower電話','Follower Email','匯款人Email','金額','後五碼','推薦人','狀態','審核時間'];
   const rows = allRegistrations.map(r => {
     const isDuo = !!r.leaderName;
     return [
@@ -288,6 +293,7 @@ function exportExcel() {
       isDuo ? r.followerEmail : '',
       isDuo ? r.payerEmail    : '',
       r.total, r.transferCode, r.referral || '', statusLabel(r.status),
+      r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW') : '',
     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
   });
 
