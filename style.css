@@ -33,8 +33,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  /* 米白底壓橘紅斜線（海報紋理感） */
-  background: var(--bg);
+  /* 橘紅 20% 淡底壓橘紅斜線（海報紋理感） */
+  background: rgba(226, 103, 75, .2);
   background-image: repeating-linear-gradient(
     -45deg,
     rgba(226, 103, 75, .5) 0 4px,
