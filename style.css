@@ -33,7 +33,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  background: #111;
+  background: var(--brand);
   border-bottom: 4px solid #111;
 }
 .site-logo {
@@ -67,7 +67,7 @@ body {
   font-weight: 700;
   transition: background .2s, color .2s;
 }
-#lang-toggle:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+#lang-toggle:hover { background: #111; border-color: #111; color: #fff; }
 
 /* ── Step Indicator ──────────────────────────────────────── */
 .steps {
