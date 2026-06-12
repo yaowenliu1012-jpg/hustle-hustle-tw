@@ -89,10 +89,7 @@ function renderStep1() {
   main.innerHTML = `<h2 class="step-title">${t('selectCourse')}</h2>
     ${filterBar}
     ${renderCourseGroup(showCourses, showEvents.length ? (lang === 'zh' ? '課程' : 'Courses') : '')}
-    ${renderCourseGroup(showEvents, showCourses.length ? (lang === 'zh' ? '活動' : 'Events') : '')}
-    <div class="btn-row">
-      <button class="btn btn-primary" id="step1-next" ${!state.courseId ? 'disabled' : ''} onclick="goStep2()">${t('next')}</button>
-    </div>`;
+    ${renderCourseGroup(showEvents, showCourses.length ? (lang === 'zh' ? '活動' : 'Events') : '')}`;
 
   bindCourseCards(main);
 }
@@ -135,15 +132,13 @@ function bindCourseCards(main) {
       const c = COURSES.find(x => x.id === card.dataset.id);
       const hasDetail = c && (c.photo || c.description || c.teacher || c.location);
       if (hasDetail) {
-        // 有詳情：點卡片開彈窗，在彈窗裡按「選擇此項目」選取
+        // 有詳情：點卡片開彈窗，在彈窗裡按「報名」進入選方案
         showCourseDetail(card.dataset.id);
       } else {
-        // 沒詳情：直接選取
+        // 沒詳情：點卡片直接進入選方案
         state.courseId = card.dataset.id;
         state.planId = null;
-        main.querySelectorAll('.course-card').forEach(x => x.classList.remove('selected'));
-        card.classList.add('selected');
-        document.getElementById('step1-next').disabled = false;
+        renderStep2();
       }
     });
   });
