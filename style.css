@@ -37,8 +37,8 @@ body {
   background: #f4d4c1;
   background-image: repeating-linear-gradient(
     -45deg,
-    rgba(226, 103, 75, .7) 0 4px,
-    transparent 4px 16px
+    rgba(226, 103, 75, .7) 0 8px,
+    transparent 8px 20px
   );
   border-bottom: 4px solid #111;
 }
