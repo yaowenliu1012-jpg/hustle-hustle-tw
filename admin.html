@@ -190,27 +190,18 @@
 
       <div class="form-2col">
         <div class="form-group">
-          <label>課程名稱（中文）*</label>
+          <label>課程名稱 *</label>
           <input id="c-name" type="text" placeholder="例：寶寶班">
         </div>
         <div class="form-group">
-          <label>課程名稱（英文）</label>
-          <input id="c-name-en" type="text" placeholder="e.g. Beginner Class">
+          <label>Emoji（沒有照片時顯示）</label>
+          <input id="c-emoji" type="text" maxlength="4" placeholder="🐣">
         </div>
       </div>
 
       <div class="form-group">
-        <label>Emoji（沒有照片時顯示）</label>
-        <input id="c-emoji" type="text" maxlength="4" placeholder="🐣" style="width:80px">
-      </div>
-
-      <div class="form-group">
-        <label>課程描述（中文）</label>
+        <label>課程描述</label>
         <textarea id="c-desc" rows="6" placeholder="介紹這堂課的內容、適合對象…（建議 150 字內，支援換行）"></textarea>
-      </div>
-      <div class="form-group">
-        <label>課程描述（英文，選填）</label>
-        <textarea id="c-desc-en" rows="3" placeholder="Course description in English"></textarea>
       </div>
 
       <div class="form-group">
@@ -233,6 +224,39 @@
         <label>師資描述</label>
         <textarea id="c-teacher-desc" rows="3" placeholder="老師的經歷、風格、得獎紀錄…"></textarea>
       </div>
+
+      <!-- 英文版內容（收合區塊，全部選填） -->
+      <details class="en-section">
+        <summary>🌐 English 英文版內容（選填，網站切換 EN 時顯示）</summary>
+        <div class="en-fields">
+          <div class="form-group">
+            <label>Course Name</label>
+            <input id="c-name-en" type="text" placeholder="e.g. Beginner Class">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="c-desc-en" rows="4" placeholder="Course description in English"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Class Times (one per line)</label>
+            <textarea id="c-sessions-en" rows="2" placeholder="Every Thu 19:00–20:30"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input id="c-location-en" type="text" placeholder="e.g. B1, No.12, XX St., Taipei">
+          </div>
+          <div class="form-2col">
+            <div class="form-group">
+              <label>Teacher</label>
+              <input id="c-teacher-en" type="text" placeholder="e.g. Coach A-Ha">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>About the Teacher</label>
+            <textarea id="c-teacher-desc-en" rows="3" placeholder="Teacher's background in English"></textarea>
+          </div>
+        </div>
+      </details>
 
       <div class="form-group">
         <label>方案與價格</label>

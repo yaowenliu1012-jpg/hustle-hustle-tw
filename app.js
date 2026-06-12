@@ -91,9 +91,9 @@ function renderStep1() {
             ${c.photo ? `<img class="course-hover-photo" src="${c.photo}" alt="">` : ''}
             <div class="course-hover-body">
               ${c.description ? `<p class="course-hover-desc">${lang === 'zh' ? c.description : (c.descriptionEn || c.description)}</p>` : ''}
-              ${c.teacher ? `<p class="course-hover-meta">🧑‍🏫 <strong>${c.teacher}</strong></p>` : ''}
-              ${c.teacherDesc ? `<p class="course-hover-teacher">${c.teacherDesc}</p>` : ''}
-              ${c.location ? `<p class="course-hover-meta">📍 ${c.location}</p>` : ''}
+              ${c.teacher ? `<p class="course-hover-meta">🧑‍🏫 <strong>${lang === 'zh' ? c.teacher : (c.teacherEn || c.teacher)}</strong></p>` : ''}
+              ${c.teacherDesc ? `<p class="course-hover-teacher">${lang === 'zh' ? c.teacherDesc : (c.teacherDescEn || c.teacherDesc)}</p>` : ''}
+              ${c.location ? `<p class="course-hover-meta">📍 ${lang === 'zh' ? c.location : (c.locationEn || c.location)}</p>` : ''}
             </div>
           </div>` : ''}
         </div>`;

@@ -295,6 +295,27 @@ textarea:focus { outline: none; border-color: var(--brand); }
   margin-top: .5rem;
   border: 1px solid var(--border);
 }
+/* 英文版收合區塊 */
+.en-section {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  margin: 1.25rem 0 1rem;
+  background: var(--surface2);
+}
+.en-section summary {
+  cursor: pointer;
+  padding: .7rem 1rem;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--muted);
+  user-select: none;
+  list-style: none;
+}
+.en-section summary::before { content: '▸ '; }
+.en-section[open] summary::before { content: '▾ '; }
+.en-section summary:hover { color: var(--text); }
+.en-fields { padding: .5rem 1rem 1rem; }
+
 .plan-row {
   display: flex;
   gap: .5rem;

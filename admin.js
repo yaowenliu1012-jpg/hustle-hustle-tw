@@ -388,14 +388,25 @@ function openCourseForm(courseId = null) {
 
   document.getElementById('course-modal-title').textContent = c ? '編輯課程' : '新增課程';
   document.getElementById('c-name').value     = c?.name || '';
-  document.getElementById('c-name-en').value  = c?.nameEn || '';
   document.getElementById('c-emoji').value    = c?.emoji || '';
   document.getElementById('c-desc').value     = c?.description || '';
-  document.getElementById('c-desc-en').value  = c?.descriptionEn || '';
   document.getElementById('c-sessions').value = (c?.sessions || []).join('\n');
   document.getElementById('c-location').value     = c?.location || '';
   document.getElementById('c-teacher').value      = c?.teacher || '';
   document.getElementById('c-teacher-desc').value = c?.teacherDesc || '';
+
+  // 英文欄位（sessionsEn 跟中文相同時視為未填，留空）
+  const enSessions = (c?.sessionsEn || []).join('\n');
+  document.getElementById('c-sessions-en').value =
+    enSessions === (c?.sessions || []).join('\n') ? '' : enSessions;
+  document.getElementById('c-name-en').value         = (c?.nameEn && c.nameEn !== c.name) ? c.nameEn : '';
+  document.getElementById('c-desc-en').value         = c?.descriptionEn || '';
+  document.getElementById('c-location-en').value     = c?.locationEn || '';
+  document.getElementById('c-teacher-en').value      = c?.teacherEn || '';
+  document.getElementById('c-teacher-desc-en').value = c?.teacherDescEn || '';
+  // 有填過英文就自動展開區塊
+  document.querySelector('.en-section').open =
+    !!(document.getElementById('c-name-en').value || c?.descriptionEn || enSessions || c?.locationEn || c?.teacherEn || c?.teacherDescEn);
   document.getElementById('c-photo').value    = '';
   document.getElementById('c-photo-preview').innerHTML =
     c?.photo ? `<img src="${c.photo}">` : '';
@@ -474,12 +485,16 @@ async function saveCourse() {
     location:      document.getElementById('c-location').value.trim(),
     teacher:       document.getElementById('c-teacher').value.trim(),
     teacherDesc:   document.getElementById('c-teacher-desc').value.trim(),
+    locationEn:     document.getElementById('c-location-en').value.trim(),
+    teacherEn:      document.getElementById('c-teacher-en').value.trim(),
+    teacherDescEn:  document.getElementById('c-teacher-desc-en').value.trim(),
     plans,
     photo:  uploadedPhoto !== null ? uploadedPhoto : (existing?.photo || ''),
     order:  existing?.order ?? adminCourses.length,
     active: existing ? existing.active !== false : true,   // 保留原本的顯示/隱藏狀態
   };
-  data.sessionsEn = data.sessions;
+  const enSessionsInput = document.getElementById('c-sessions-en').value.split('\n').map(s => s.trim()).filter(Boolean);
+  data.sessionsEn = enSessionsInput.length ? enSessionsInput : data.sessions;
 
   err.textContent = '';
   try {
