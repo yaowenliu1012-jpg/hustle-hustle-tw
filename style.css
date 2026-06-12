@@ -168,15 +168,20 @@ body {
   transition: transform .12s, box-shadow .12s;
 }
 .filter-pill:hover { transform: translateY(-2px); box-shadow: 3px 3px 0 #111; }
-.filter-pill.active { background: #111; color: var(--bg); }
+.filter-pill.active { background: var(--mustard); color: #111; box-shadow: 3px 3px 0 #111; }
 
 /* 課程 / 活動 分區標題 */
 .group-title {
-  font-size: 1.05rem;
+  display: table;
+  font-size: 1rem;
   font-weight: 900;
-  margin: 1.5rem 0 .9rem;
-  padding-left: .75rem;
-  border-left: 6px solid var(--dustblue);
+  margin: 1.5rem 0 1rem;
+  padding: .3rem 1.1rem;
+  background: var(--dustblue);
+  color: #fff;
+  border: 3px solid #111;
+  border-radius: 30px;
+  box-shadow: 3px 3px 0 #111;
 }
 
 /* ── Course Cards ─────────────────────────────────────────── */
@@ -297,7 +302,7 @@ body {
 .course-sessions { font-size: .82rem; color: var(--text-muted); margin-bottom: .75rem; line-height: 1.6; }
 .price-tag {
   display: inline-block;
-  background: var(--surface2);
+  background: #f8e3a8;   /* 淡芥末黃 */
   border: 2px solid #111;
   border-radius: 6px;
   padding: .2rem .5rem;
