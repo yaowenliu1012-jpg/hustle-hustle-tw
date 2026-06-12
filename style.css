@@ -36,8 +36,8 @@ body {
   /* 米白底壓橘紅斜線（海報紋理感） */
   background: var(--bg);
   background-image: repeating-linear-gradient(
-    45deg,
-    rgba(226, 103, 75, .28) 0 3px,
+    -45deg,
+    var(--brand) 0 3px,
     transparent 3px 16px
   );
   border-bottom: 4px solid #111;
