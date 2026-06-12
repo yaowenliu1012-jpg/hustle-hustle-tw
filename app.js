@@ -11,6 +11,7 @@ let state = {
   courseId: null,
   planId: null,
   formData: {},
+  typeFilter: 'all',   // 'all' 全部 | 'course' 課程 | 'event' 活動
 };
 
 // 課程清單：優先用 Firestore 後台管理的課程，沒有才用 config.js 的預設值
@@ -73,14 +74,38 @@ function renderStep1() {
   const courseList = COURSES.filter(c => c.type !== 'event');
   const eventList  = COURSES.filter(c => c.type === 'event');
 
+  // 篩選列（兩種類型都有資料時才顯示）
+  const f = state.typeFilter;
+  const filterBar = (courseList.length && eventList.length) ? `
+    <div class="type-filter">
+      <button class="filter-pill ${f === 'all' ? 'active' : ''}"    onclick="setTypeFilter('all')">${lang === 'zh' ? '全部' : 'All'}</button>
+      <button class="filter-pill ${f === 'course' ? 'active' : ''}" onclick="setTypeFilter('course')">${lang === 'zh' ? '課程' : 'Courses'}</button>
+      <button class="filter-pill ${f === 'event' ? 'active' : ''}"  onclick="setTypeFilter('event')">${lang === 'zh' ? '活動' : 'Events'}</button>
+    </div>` : '';
+
+  const showCourses = f !== 'event' ? courseList : [];
+  const showEvents  = f !== 'course' ? eventList : [];
+
   main.innerHTML = `<h2 class="step-title">${t('selectCourse')}</h2>
-    ${renderCourseGroup(courseList, eventList.length ? (lang === 'zh' ? '課程' : 'Courses') : '')}
-    ${renderCourseGroup(eventList, lang === 'zh' ? '活動' : 'Events')}
+    ${filterBar}
+    ${renderCourseGroup(showCourses, showEvents.length ? (lang === 'zh' ? '課程' : 'Courses') : '')}
+    ${renderCourseGroup(showEvents, showCourses.length ? (lang === 'zh' ? '活動' : 'Events') : '')}
     <div class="btn-row">
       <button class="btn btn-primary" id="step1-next" ${!state.courseId ? 'disabled' : ''} onclick="goStep2()">${t('next')}</button>
     </div>`;
 
   bindCourseCards(main);
+}
+
+function setTypeFilter(f) {
+  state.typeFilter = f;
+  // 篩掉的類型如果包含已選的項目，取消選取
+  const sel = COURSES.find(c => c.id === state.courseId);
+  if (sel && f !== 'all') {
+    const selType = sel.type === 'event' ? 'event' : 'course';
+    if (selType !== f) state.courseId = null;
+  }
+  renderStep1();
 }
 
 function renderCourseGroup(list, heading) {

@@ -143,6 +143,27 @@ body {
   border-radius: 30px;
 }
 
+/* 課程 / 活動 篩選列 */
+.type-filter {
+  display: flex;
+  justify-content: center;
+  gap: .6rem;
+  margin: -0.5rem 0 1.25rem;
+}
+.filter-pill {
+  padding: .45rem 1.3rem;
+  border: 3px solid #111;
+  border-radius: 30px;
+  background: #fff;
+  color: #111;
+  font-size: .9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
+}
+.filter-pill:hover { transform: translateY(-2px); box-shadow: 3px 3px 0 #111; }
+.filter-pill.active { background: #111; color: var(--bg); }
+
 /* 課程 / 活動 分區標題 */
 .group-title {
   font-size: 1.05rem;
