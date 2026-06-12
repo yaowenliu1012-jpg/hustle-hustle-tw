@@ -116,7 +116,6 @@ function renderCourseGroup(list, heading) {
         const hasDetail = c.photo || c.description || c.teacher || c.location;
         return `
         <div class="course-card ${state.courseId === c.id ? 'selected' : ''}" data-id="${c.id}">
-          ${hasDetail ? `<button class="info-btn" data-info="${c.id}" aria-label="課程詳情">ⓘ</button>` : ''}
           <div class="course-name">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>
           <div class="course-sessions">
             <strong>${c.type === 'event' ? (lang === 'zh' ? '活動時間' : 'Event Times') : t('sessions')}：</strong>
@@ -133,19 +132,19 @@ function renderCourseGroup(list, heading) {
 function bindCourseCards(main) {
   main.querySelectorAll('.course-card').forEach(card => {
     card.addEventListener('click', () => {
-      state.courseId = card.dataset.id;
-      state.planId = null;
-      main.querySelectorAll('.course-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      document.getElementById('step1-next').disabled = false;
-    });
-  });
-
-  // ⓘ 按鈕：點擊開啟詳情彈窗
-  main.querySelectorAll('.info-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      showCourseDetail(btn.dataset.info);
+      const c = COURSES.find(x => x.id === card.dataset.id);
+      const hasDetail = c && (c.photo || c.description || c.teacher || c.location);
+      if (hasDetail) {
+        // 有詳情：點卡片開彈窗，在彈窗裡按「選擇此項目」選取
+        showCourseDetail(card.dataset.id);
+      } else {
+        // 沒詳情：直接選取
+        state.courseId = card.dataset.id;
+        state.planId = null;
+        main.querySelectorAll('.course-card').forEach(x => x.classList.remove('selected'));
+        card.classList.add('selected');
+        document.getElementById('step1-next').disabled = false;
+      }
     });
   });
 }
