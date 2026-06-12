@@ -36,8 +36,8 @@ body {
   /* 實色淡橘紅底壓橘紅細格線（方格紙感） */
   background: #f4d4c1;
   background-image:
-    repeating-linear-gradient(0deg,  rgba(226, 103, 75, .7) 0 1px, transparent 1px 14px),
-    repeating-linear-gradient(90deg, rgba(226, 103, 75, .7) 0 1px, transparent 1px 14px);
+    repeating-linear-gradient(0deg,  rgba(226, 103, 75, .25) 0 1px, transparent 1px 20px),
+    repeating-linear-gradient(90deg, rgba(226, 103, 75, .25) 0 1px, transparent 1px 20px);
   border-bottom: 4px solid #111;
 }
 .site-logo {
