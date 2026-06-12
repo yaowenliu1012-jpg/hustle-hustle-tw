@@ -193,7 +193,6 @@ function renderStep3() {
         <fieldset>
           ${field('solo_name',  t('name'),  fd.solo_name,  'text')}
           ${field('solo_phone', t('phone'), fd.solo_phone, 'tel')}
-          ${field('solo_email', t('email'), fd.solo_email, 'email')}
           <div class="form-group">
             <label>${t('role')}</label>
             <div class="radio-row">
@@ -250,7 +249,6 @@ function validateStep3() {
   } else {
     check('solo_name',  notEmpty);
     check('solo_phone', validPhone);
-    check('solo_email', validEmail);
     // radio
     const roleVal = form.querySelector('input[name="solo_role"]:checked')?.value || '';
     const roleErr = document.getElementById('err-solo_role');
@@ -266,7 +264,7 @@ function validateStep3() {
       state.formData[id] = document.getElementById(id)?.value.trim() || '';
     });
   } else {
-    ['solo_name','solo_phone','solo_email','referral'].forEach(id => {
+    ['solo_name','solo_phone','referral'].forEach(id => {
       state.formData[id] = document.getElementById(id)?.value.trim() || '';
     });
     state.formData.solo_role = form.querySelector('input[name="solo_role"]:checked')?.value || '';
@@ -300,7 +298,6 @@ function renderStep4() {
         ` : `
           <tr><td>${t('name')}</td><td>${fd.solo_name}</td></tr>
           <tr><td>${t('phone')}</td><td>${fd.solo_phone}</td></tr>
-          <tr><td>${t('email')}</td><td>${fd.solo_email}</td></tr>
           <tr><td>${t('role')}</td><td>${fd.solo_role}</td></tr>
         `}
         ${hasRef ? `<tr><td>${t('discount')}</td><td>- NT$${discount} （${fd.referral}）</td></tr>` : ''}
@@ -318,14 +315,13 @@ function renderStep4() {
       <div><strong>${t('bankHolder')}：</strong>${SITE_CONFIG.bank.holder}</div>
     </div>
 
-    ${isDuo ? `
     <div class="form-group" style="margin-top:1.5rem">
-      <label for="payer-email">${t('payerEmail')} <span class="req">*</span></label>
-      <input id="payer-email" type="email" value="${escHtml(fd.payer_email)}" autocomplete="off">
+      <label for="payer-email">${isDuo ? t('payerEmail') : t('email')} <span class="req">*</span></label>
+      <input id="payer-email" type="email" value="${escHtml(isDuo ? fd.payer_email : fd.solo_email)}" autocomplete="off">
       <span class="error-msg" id="err-payer-email"></span>
-    </div>` : ''}
+    </div>
 
-    <div class="form-group" ${isDuo ? '' : 'style="margin-top:1.5rem"'}>
+    <div class="form-group">
       <label for="transfer-code">${t('transferCode')} <span class="req">*</span></label>
       <input id="transfer-code" type="text" inputmode="numeric" maxlength="5" placeholder="12345">
       <span class="error-msg" id="err-transfer-code"></span>
@@ -347,15 +343,16 @@ function copyAccount() {
 
 // ── 送出報名 ─────────────────────────────────────────────────
 async function submitForm() {
-  // 雙人報名：先驗證匯款人 Email
+  // 驗證 Email（雙人＝匯款人 Email；單人＝本人 Email）
   const payerInput = document.getElementById('payer-email');
-  if (payerInput) {
+  {
     const payerErr = document.getElementById('err-payer-email');
     const v = payerInput.value.trim();
     if (!v) { payerErr.textContent = t('required'); payerInput.focus(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { payerErr.textContent = t('invalidEmail'); payerInput.focus(); return; }
     payerErr.textContent = '';
-    state.formData.payer_email = v;
+    if (state.planId === 'duo') state.formData.payer_email = v;
+    else state.formData.solo_email = v;
   }
 
   const code = document.getElementById('transfer-code').value.trim();
