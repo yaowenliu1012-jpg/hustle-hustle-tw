@@ -323,7 +323,8 @@ textarea:focus { outline: none; border-color: var(--brand); }
   align-items: center;
 }
 .plan-row .plan-label-input { flex: 2; }
-.plan-row .plan-price-input { flex: 1; }
+.plan-row .plan-label-en-input { flex: 2; }
+.plan-row .plan-price-input { flex: 1; min-width: 80px; }
 input[type="file"] { color: var(--muted); font-size: .85rem; }
 
 /* ── Modal ────────────────────────────────────────────────── */

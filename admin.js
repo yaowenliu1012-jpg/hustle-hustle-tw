@@ -423,11 +423,14 @@ function closeCourseForm() {
   editingCourseId = null;
 }
 
-function addPlanRow(plan = { label: '', price: '' }) {
+function addPlanRow(plan = { label: '', labelEn: '', price: '' }) {
   const row = document.createElement('div');
   row.className = 'plan-row';
+  // labelEn 跟中文相同時視為未填英文，顯示空白
+  const labelEn = (plan.labelEn && plan.labelEn !== plan.label) ? plan.labelEn : '';
   row.innerHTML = `
     <input type="text" class="plan-label-input" placeholder="方案名（如：單人）" value="${plan.label || ''}">
+    <input type="text" class="plan-label-en-input" placeholder="English (e.g. Solo)" value="${labelEn}">
     <input type="number" class="plan-price-input" placeholder="價格" min="0" value="${plan.price ?? ''}">
     <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>`;
   document.getElementById('c-plans').appendChild(row);
@@ -461,12 +464,13 @@ async function saveCourse() {
   // 收集方案
   const plans = [];
   document.querySelectorAll('#c-plans .plan-row').forEach((row, i) => {
-    const label = row.querySelector('.plan-label-input').value.trim();
+    const label   = row.querySelector('.plan-label-input').value.trim();
+    const labelEn = row.querySelector('.plan-label-en-input').value.trim();
     const price = Number(row.querySelector('.plan-price-input').value);
     if (label && price > 0) {
       // 雙人方案要顯示 Leader/Follower 欄位，靠 id 判斷
       const id = label.includes('雙') ? 'duo' : (i === 0 ? 'solo' : 'plan' + i);
-      plans.push({ id, label, labelEn: label, price });
+      plans.push({ id, label, labelEn: labelEn || label, price });
     }
   });
   if (!plans.length) { err.textContent = '至少要有一個方案（名稱＋價格）'; return; }
