@@ -144,6 +144,11 @@ function goStep2() {
   renderStep2();
 }
 
+// 哈友回娘家方案不適用推薦人優惠
+function isAlumniPlan(p) {
+  return !!p && /哈友|回娘家/.test(p.label || '');
+}
+
 // 目前報名中的課程標示（顯示在步驟 2、3 的標題下方）
 function courseBanner() {
   const c = COURSES.find(x => x.id === state.courseId);
@@ -195,7 +200,8 @@ function renderStep3() {
   const fd = state.formData;
   const main = document.getElementById('main');
   const course = COURSES.find(c => c.id === state.courseId);
-  const referralOn = course?.referralEnabled !== false;
+  const plan = course?.plans.find(p => p.id === state.planId);
+  const referralOn = course?.referralEnabled !== false && !isAlumniPlan(plan);
 
   main.innerHTML = `<h2 class="step-title">${t('fillInfo')}</h2>
     ${courseBanner()}
@@ -304,7 +310,7 @@ function renderStep4() {
   const plan   = course.plans.find(p => p.id === state.planId);
   const fd     = state.formData;
   const isDuo  = state.planId === 'duo';
-  const hasRef = fd.referral && fd.referral.trim() && course.referralEnabled !== false;
+  const hasRef = fd.referral && fd.referral.trim() && course.referralEnabled !== false && !isAlumniPlan(plan);
   const discount = hasRef ? SITE_CONFIG.referralDiscount : 0;
   const total  = plan.price - discount;
 
@@ -387,7 +393,7 @@ async function submitForm() {
   const plan   = course.plans.find(p => p.id === state.planId);
   const isDuo  = state.planId === 'duo';
   const fd     = state.formData;
-  const hasRef = fd.referral && fd.referral.trim() && course.referralEnabled !== false;
+  const hasRef = fd.referral && fd.referral.trim() && course.referralEnabled !== false && !isAlumniPlan(plan);
   const discount = hasRef ? SITE_CONFIG.referralDiscount : 0;
 
   const payload = {
