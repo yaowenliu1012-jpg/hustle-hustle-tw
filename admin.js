@@ -363,7 +363,8 @@ function switchTab(tab) {
 // ════════════════════════════════════════════════════════════
 let adminCourses = [];
 let editingCourseId = null;
-let uploadedPhoto = null;   // base64，null = 沒動過
+let editingType = 'course';   // 'course' 課程 | 'event' 活動
+let uploadedPhoto = null;     // base64，null = 沒動過
 
 async function loadCourseList() {
   const wrap = document.getElementById('course-list');
@@ -389,7 +390,7 @@ async function loadCourseList() {
     <div class="course-admin-card ${hidden ? 'course-hidden' : ''}">
       ${c.photo ? `<img src="${c.photo}" class="course-admin-photo">` : `<div class="course-admin-photo course-admin-emoji">${c.emoji || '💃'}</div>`}
       <div class="course-admin-info">
-        <div class="course-admin-name">${c.emoji || ''} ${c.name} ${hidden ? '<span class="hidden-tag">已隱藏</span>' : ''}</div>
+        <div class="course-admin-name">${c.emoji || ''} ${c.name} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''} ${hidden ? '<span class="hidden-tag">已隱藏</span>' : ''}</div>
         <div class="course-admin-desc">${c.description || '（無描述）'}</div>
         <div class="course-admin-plans">${c.teacher ? `🧑‍🏫 ${c.teacher}　` : ''}${(c.plans || []).map(p => `${p.label} NT$${p.price}`).join('｜')}</div>
       </div>
@@ -426,12 +427,14 @@ async function moveCourse(index, dir) {
 }
 
 // ── 新增 / 編輯表單 ──────────────────────────────────────────
-function openCourseForm(courseId = null) {
+function openCourseForm(courseId = null, type = 'course') {
   editingCourseId = courseId;
   uploadedPhoto = null;
   const c = courseId ? adminCourses.find(x => x.id === courseId) : null;
+  editingType = c ? (c.type || 'course') : type;
 
-  document.getElementById('course-modal-title').textContent = c ? '編輯課程' : '新增課程';
+  const typeName = editingType === 'event' ? '活動' : '課程';
+  document.getElementById('course-modal-title').textContent = c ? `編輯${typeName}` : `新增${typeName}`;
   document.getElementById('c-name').value     = c?.name || '';
   document.getElementById('c-emoji').value    = c?.emoji || '';
   document.getElementById('c-desc').value     = c?.description || '';
@@ -538,6 +541,7 @@ async function saveCourse() {
     plans,
     photo:  uploadedPhoto !== null ? uploadedPhoto : (existing?.photo || ''),
     referralEnabled: document.getElementById('c-referral').checked,
+    type:   editingType,
     order:  existing?.order ?? adminCourses.length,
     active: existing ? existing.active !== false : true,   // 保留原本的顯示/隱藏狀態
   };

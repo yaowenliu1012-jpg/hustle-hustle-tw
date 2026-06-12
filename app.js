@@ -70,9 +70,24 @@ function renderStep1() {
   state.step = 1;
   updateStepIndicator();
   const main = document.getElementById('main');
+  const courseList = COURSES.filter(c => c.type !== 'event');
+  const eventList  = COURSES.filter(c => c.type === 'event');
+
   main.innerHTML = `<h2 class="step-title">${t('selectCourse')}</h2>
+    ${renderCourseGroup(courseList, eventList.length ? (lang === 'zh' ? '課程' : 'Courses') : '')}
+    ${renderCourseGroup(eventList, lang === 'zh' ? '活動' : 'Events')}
+    <div class="btn-row">
+      <button class="btn btn-primary" id="step1-next" ${!state.courseId ? 'disabled' : ''} onclick="goStep2()">${t('next')}</button>
+    </div>`;
+
+  bindCourseCards(main);
+}
+
+function renderCourseGroup(list, heading) {
+  if (!list.length) return '';
+  return `${heading ? `<h3 class="group-title">${heading}</h3>` : ''}
     <div class="course-grid">
-      ${COURSES.map(c => {
+      ${list.map(c => {
         const hasDetail = c.photo || c.description || c.teacher || c.location;
         return `
         <div class="course-card ${state.courseId === c.id ? 'selected' : ''}" data-id="${c.id}">
@@ -98,11 +113,10 @@ function renderStep1() {
           </div>` : ''}
         </div>`;
       }).join('')}
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" id="step1-next" ${!state.courseId ? 'disabled' : ''} onclick="goStep2()">${t('next')}</button>
     </div>`;
+}
 
+function bindCourseCards(main) {
   main.querySelectorAll('.course-card').forEach(card => {
     card.addEventListener('click', () => {
       state.courseId = card.dataset.id;
