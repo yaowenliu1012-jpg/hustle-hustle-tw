@@ -57,7 +57,7 @@ function initFirebase() {
 // ── 載入報名資料 ──────────────────────────────────────────────
 async function loadRegistrations() {
   const tbody = document.getElementById('reg-tbody');
-  tbody.innerHTML = '<tr><td colspan="13" class="loading-cell">載入中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="14" class="loading-cell">載入中...</td></tr>';
 
   if (!db) { showDemoData(); return; }
 
@@ -67,7 +67,7 @@ async function loadRegistrations() {
     populateCourseFilter();
     applyFilters();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="13" class="loading-cell">載入失敗：${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="loading-cell">載入失敗：${e.message}</td></tr>`;
   }
 }
 
@@ -109,7 +109,7 @@ function applyFilters() {
 function renderTable(rows, roleF = '') {
   const tbody = document.getElementById('reg-tbody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="13" class="loading-cell">沒有資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" class="loading-cell">沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r => {
@@ -119,6 +119,9 @@ function renderTable(rows, roleF = '') {
     const showF = !roleF || roleF === 'Follower';
     const lLine = (col) => `<div class="duo-line"><span class="duo-tag">L</span>${col}</div>`;
     const fLine = (col) => `<div class="duo-line"><span class="duo-tag">F</span>${col}</div>`;
+    const roleCol = isDuo
+      ? `${showL ? '<div class="duo-line">Leader</div>' : ''}${showF ? '<div class="duo-line">Follower</div>' : ''}`
+      : (r.role || '—');
     const name  = isDuo
       ? `${showL ? lLine(r.leaderName) : ''}${showF ? fLine(r.followerName) : ''}`
       : r.name;
@@ -132,6 +135,7 @@ function renderTable(rows, roleF = '') {
       <td>${date}</td>
       <td>${r.courseName}</td>
       <td>${r.planName}</td>
+      <td>${roleCol}</td>
       <td>${name}</td>
       <td>${phone}</td>
       <td>${email}</td>
