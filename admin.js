@@ -57,17 +57,18 @@ function initFirebase() {
 // ── 載入報名資料 ──────────────────────────────────────────────
 async function loadRegistrations() {
   const tbody = document.getElementById('reg-tbody');
-  tbody.innerHTML = '<tr><td colspan="14" class="loading-cell">載入中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="15" class="loading-cell">載入中...</td></tr>';
 
   if (!db) { showDemoData(); return; }
 
   try {
     const snap = await db.collection('registrations').orderBy('createdAt', 'desc').get();
     allRegistrations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    assignSeq();
     populateCourseFilter();
     applyFilters();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="14" class="loading-cell">載入失敗：${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="15" class="loading-cell">載入失敗：${e.message}</td></tr>`;
   }
 }
 
@@ -77,8 +78,16 @@ function showDemoData() {
     { id: 'demo1', createdAt: new Date().toISOString(), courseName: '進階班', planName: '單人', name: '王小明', phone: '0912345678', email: 'test@example.com', role: 'Leader', total: 1900, transferCode: '12345', referral: '李教練', status: 'pending' },
     { id: 'demo2', createdAt: new Date().toISOString(), courseName: '寶寶班', planName: '雙人', leaderName: '張三', leaderPhone: '0987654321', leaderEmail: 'a@a.com', followerName: '李四', followerPhone: '0911111111', followerEmail: 'b@b.com', payerEmail: 'a@a.com', total: 3400, transferCode: '67890', referral: '', status: 'approved' },
   ];
+  assignSeq();
   populateCourseFilter();
   applyFilters();
+}
+
+// 依報名先後順序編流水號（最早報名 = 1）
+function assignSeq() {
+  [...allRegistrations]
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .forEach((r, i) => { r.seq = i + 1; });
 }
 
 // ── 過濾 & 渲染表格 ───────────────────────────────────────────
@@ -109,7 +118,7 @@ function applyFilters() {
 function renderTable(rows, roleF = '') {
   const tbody = document.getElementById('reg-tbody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="14" class="loading-cell">沒有資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" class="loading-cell">沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r => {
@@ -132,6 +141,7 @@ function renderTable(rows, roleF = '') {
     const date  = new Date(r.createdAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
     return `<tr>
       <td><input type="checkbox" class="row-check" data-id="${r.id}" onchange="updateBulkBar()"></td>
+      <td>${r.seq || ''}</td>
       <td>${date}</td>
       <td>${r.courseName}</td>
       <td>${r.planName}</td>
@@ -342,12 +352,12 @@ async function sendStatusEmail(toEmail, name, courseName, status) {
 
 // ── 匯出 Excel（CSV） ────────────────────────────────────────
 function exportExcel() {
-  const headers = ['報名時間','課程','方案','角色','姓名','電話','Email','金額','後五碼','推薦人','狀態','審核時間'];
+  const headers = ['編號','報名時間','課程','方案','角色','姓名','電話','Email','金額','後五碼','推薦人','狀態','審核時間'];
   // 一般欄位用引號包；電話、後五碼用 ="..." 強制 Excel 當文字，避免 0 開頭消失或變科學記號
   const q    = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
   const qTxt = v => { const s = String(v ?? ''); return s ? `="${s.replace(/"/g,'""')}"` : '""'; };
-  const makeRow = (time, course, plan, role, name, phone, email, total, code, ref, status, reviewed) =>
-    [q(time), q(course), q(plan), q(role), q(name), qTxt(phone), q(email), q(total), qTxt(code), q(ref), q(status), q(reviewed)].join(',');
+  const makeRow = (seq, time, course, plan, role, name, phone, email, total, code, ref, status, reviewed) =>
+    [q(seq), q(time), q(course), q(plan), q(role), q(name), qTxt(phone), q(email), q(total), qTxt(code), q(ref), q(status), q(reviewed)].join(',');
 
   const rows = allRegistrations.flatMap(r => {
     const time = new Date(r.createdAt).toLocaleString('zh-TW');
@@ -355,12 +365,12 @@ function exportExcel() {
     const status = statusLabel(r.status);
     const isDuo = !!r.leaderName;
     if (!isDuo) {
-      return [makeRow(time, r.courseName, r.planName, r.role || '', r.name, r.phone, r.email, r.total, r.transferCode, r.referral || '', status, reviewed)];
+      return [makeRow(r.seq, time, r.courseName, r.planName, r.role || '', r.name, r.phone, r.email, r.total, r.transferCode, r.referral || '', status, reviewed)];
     }
     // 雙人拆兩行：金額/後五碼/Email/推薦人只記在 Leader 行，避免重複計算
     return [
-      makeRow(time, r.courseName, r.planName, 'Leader',   r.leaderName,   r.leaderPhone,   r.payerEmail, r.total, r.transferCode, r.referral || '', status, reviewed),
-      makeRow(time, r.courseName, r.planName, 'Follower', r.followerName, r.followerPhone, '',           '',      '',              '',               status, reviewed),
+      makeRow(r.seq, time, r.courseName, r.planName, 'Leader',   r.leaderName,   r.leaderPhone,   r.payerEmail, r.total, r.transferCode, r.referral || '', status, reviewed),
+      makeRow(r.seq, time, r.courseName, r.planName, 'Follower', r.followerName, r.followerPhone, '',           '',      '',              '',               status, reviewed),
     ];
   });
 
