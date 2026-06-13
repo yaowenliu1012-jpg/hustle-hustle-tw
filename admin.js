@@ -342,24 +342,26 @@ async function sendStatusEmail(toEmail, name, courseName, status) {
 
 // ── 匯出 Excel（CSV） ────────────────────────────────────────
 function exportExcel() {
-  const headers = ['報名時間','課程','方案','角色','Leader姓名','Leader電話','Follower姓名','Follower電話','Email','金額','後五碼','推薦人','狀態','審核時間'];
+  const headers = ['報名時間','課程','方案','角色','姓名','電話','Email','金額','後五碼','推薦人','狀態','審核時間'];
   // 一般欄位用引號包；電話、後五碼用 ="..." 強制 Excel 當文字，避免 0 開頭消失或變科學記號
   const q    = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
   const qTxt = v => { const s = String(v ?? ''); return s ? `="${s.replace(/"/g,'""')}"` : '""'; };
-  const rows = allRegistrations.map(r => {
+  const makeRow = (time, course, plan, role, name, phone, email, total, code, ref, status, reviewed) =>
+    [q(time), q(course), q(plan), q(role), q(name), qTxt(phone), q(email), q(total), qTxt(code), q(ref), q(status), q(reviewed)].join(',');
+
+  const rows = allRegistrations.flatMap(r => {
+    const time = new Date(r.createdAt).toLocaleString('zh-TW');
+    const reviewed = r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW') : '';
+    const status = statusLabel(r.status);
     const isDuo = !!r.leaderName;
+    if (!isDuo) {
+      return [makeRow(time, r.courseName, r.planName, r.role || '', r.name, r.phone, r.email, r.total, r.transferCode, r.referral || '', status, reviewed)];
+    }
+    // 雙人拆兩行：金額/後五碼/Email/推薦人只記在 Leader 行，避免重複計算
     return [
-      q(new Date(r.createdAt).toLocaleString('zh-TW')),
-      q(r.courseName), q(r.planName),
-      q(isDuo ? 'Leader / Follower' : (r.role || '')),
-      q(isDuo ? r.leaderName  : (r.name  || '')),
-      qTxt(isDuo ? r.leaderPhone : r.phone),
-      q(isDuo ? (r.followerName  || '') : ''),
-      qTxt(isDuo ? (r.followerPhone || '') : ''),
-      q(isDuo ? (r.payerEmail || '') : (r.email || '')),
-      q(r.total), qTxt(r.transferCode), q(r.referral || ''), q(statusLabel(r.status)),
-      q(r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW') : ''),
-    ].join(',');
+      makeRow(time, r.courseName, r.planName, 'Leader',   r.leaderName,   r.leaderPhone,   r.payerEmail, r.total, r.transferCode, r.referral || '', status, reviewed),
+      makeRow(time, r.courseName, r.planName, 'Follower', r.followerName, r.followerPhone, '',           '',      '',              '',               status, reviewed),
+    ];
   });
 
   const bom = '﻿';
