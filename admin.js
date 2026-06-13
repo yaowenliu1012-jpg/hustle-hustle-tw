@@ -83,6 +83,14 @@ function showDemoData() {
   applyFilters();
 }
 
+// 顯示順序：desc = 新到舊（預設）, asc = 舊到新
+let sortOrder = 'desc';
+function toggleSort() {
+  sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+  document.getElementById('btn-sort').textContent = sortOrder === 'desc' ? '↓ 新到舊' : '↑ 舊到新';
+  applyFilters();
+}
+
 // 依報名先後順序編流水號（最早報名 = 1）
 function assignSeq() {
   [...allRegistrations]
@@ -107,6 +115,10 @@ function applyFilters() {
     }
     return true;
   });
+
+  filtered.sort((a, b) => sortOrder === 'desc'
+    ? new Date(b.createdAt) - new Date(a.createdAt)
+    : new Date(a.createdAt) - new Date(b.createdAt));
 
   renderTable(filtered, roleF);
   renderStats();
