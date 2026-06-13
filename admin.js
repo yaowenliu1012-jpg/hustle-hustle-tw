@@ -85,10 +85,17 @@ function showDemoData() {
 function applyFilters() {
   const statusF = document.getElementById('filter-status').value;
   const courseF = document.getElementById('filter-course').value;
+  const roleF   = document.getElementById('filter-role').value;
 
   const filtered = allRegistrations.filter(r => {
     if (statusF && r.status !== statusF) return false;
     if (courseF && r.courseName !== courseF) return false;
+    if (roleF) {
+      const isDuo = !!r.leaderName;
+      // 雙人含 leader + follower，兩種角色都算；單人看本人 role
+      const matchRole = isDuo ? true : r.role === roleF;
+      if (!matchRole) return false;
+    }
     return true;
   });
 
