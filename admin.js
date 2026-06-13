@@ -342,23 +342,21 @@ async function sendStatusEmail(toEmail, name, courseName, status) {
 
 // ── 匯出 Excel（CSV） ────────────────────────────────────────
 function exportExcel() {
-  const headers = ['報名時間','課程','方案','姓名/Leader','電話','Email','角色','Follower','Follower電話','Follower Email','匯款人Email','金額','後五碼','推薦人','狀態','審核時間'];
+  const headers = ['報名時間','課程','方案','角色','Leader姓名','Leader電話','Follower姓名','Follower電話','Email','金額','後五碼','推薦人','狀態','審核時間'];
   const rows = allRegistrations.map(r => {
     const isDuo = !!r.leaderName;
     return [
       new Date(r.createdAt).toLocaleString('zh-TW'),
       r.courseName, r.planName,
-      isDuo ? r.leaderName  : r.name,
-      isDuo ? r.leaderPhone : r.phone,
-      isDuo ? r.leaderEmail : r.email,
-      isDuo ? '' : r.role,
-      isDuo ? r.followerName  : '',
-      isDuo ? r.followerPhone : '',
-      isDuo ? r.followerEmail : '',
-      isDuo ? r.payerEmail    : '',
+      isDuo ? 'Leader / Follower' : (r.role || ''),
+      isDuo ? r.leaderName  : (r.name  || ''),
+      isDuo ? r.leaderPhone : (r.phone || ''),
+      isDuo ? (r.followerName  || '') : '',
+      isDuo ? (r.followerPhone || '') : '',
+      isDuo ? (r.payerEmail || '') : (r.email || ''),
       r.total, r.transferCode, r.referral || '', statusLabel(r.status),
       r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW') : '',
-    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+    ].map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',');
   });
 
   const bom = '﻿';
