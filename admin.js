@@ -99,14 +99,14 @@ function applyFilters() {
     return true;
   });
 
-  renderTable(filtered);
+  renderTable(filtered, roleF);
   renderStats();
   const master = document.getElementById('select-all');
   if (master) { master.checked = false; }
   updateBulkBar();
 }
 
-function renderTable(rows) {
+function renderTable(rows, roleF = '') {
   const tbody = document.getElementById('reg-tbody');
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="13" class="loading-cell">沒有資料</td></tr>';
@@ -114,11 +114,16 @@ function renderTable(rows) {
   }
   tbody.innerHTML = rows.map(r => {
     const isDuo = !!r.leaderName;
+    // 雙人：有篩角色時只顯示對應那一人；否則兩人都列
+    const showL = !roleF || roleF === 'Leader';
+    const showF = !roleF || roleF === 'Follower';
+    const lLine = (col) => `<div class="duo-line"><span class="duo-tag">L</span>${col}</div>`;
+    const fLine = (col) => `<div class="duo-line"><span class="duo-tag">F</span>${col}</div>`;
     const name  = isDuo
-      ? `<div class="duo-line"><span class="duo-tag">L</span>${r.leaderName}</div><div class="duo-line"><span class="duo-tag">F</span>${r.followerName}</div>`
+      ? `${showL ? lLine(r.leaderName) : ''}${showF ? fLine(r.followerName) : ''}`
       : r.name;
     const phone = isDuo
-      ? `<div class="duo-line"><span class="duo-tag">L</span>${r.leaderPhone}</div><div class="duo-line"><span class="duo-tag">F</span>${r.followerPhone}</div>`
+      ? `${showL ? lLine(r.leaderPhone) : ''}${showF ? fLine(r.followerPhone) : ''}`
       : r.phone;
     const email = isDuo ? r.payerEmail  : r.email;
     const date  = new Date(r.createdAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
