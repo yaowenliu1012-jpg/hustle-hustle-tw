@@ -170,6 +170,28 @@ td {
 tr:hover td { background: var(--surface); }
 .loading-cell { text-align: center; color: var(--muted); padding: 2rem; }
 
+/* 雙人報名 Leader/Follower 分行 */
+.duo-line {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .1rem 0;
+  white-space: nowrap;
+}
+.duo-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 /* Status badges */
 .badge {
   display: inline-block;
