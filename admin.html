@@ -33,6 +33,7 @@
         <a class="nav-item active" data-tab="registrations" onclick="switchTab('registrations')">📋 報名管理</a>
         <a class="nav-item" data-tab="courses" onclick="switchTab('courses')">💃 課程管理</a>
         <a class="nav-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 設定</a>
+        <a class="nav-item" data-tab="trash" onclick="switchTab('trash')">🗑 回收桶</a>
       </nav>
       <button class="btn btn-logout" onclick="doLogout()">登出</button>
     </aside>
@@ -58,6 +59,12 @@
               <option value="Leader">Leader</option>
               <option value="Follower">Follower</option>
             </select>
+            <select id="filter-admit" onchange="applyFilters()">
+              <option value="">全部招生</option>
+              <option value="admit">錄取</option>
+              <option value="wait">候補</option>
+              <option value="hold">待定</option>
+            </select>
             <button class="btn btn-secondary" id="btn-sort" onclick="toggleSort()">↓ 新到舊</button>
             <button class="btn btn-danger" id="btn-bulk-delete" onclick="bulkDelete()" style="display:none">🗑 刪除勾選</button>
             <button class="btn btn-secondary" onclick="exportExcel()">匯出 Excel</button>
@@ -66,6 +73,8 @@
         </div>
 
         <div id="stats-row" class="stats-row"></div>
+
+        <div id="capacity-summary" class="capacity-summary"></div>
 
         <div class="table-wrap">
           <table id="reg-table">
@@ -84,12 +93,13 @@
                 <th>後五碼</th>
                 <th>推薦人</th>
                 <th>狀態</th>
+                <th>招生</th>
                 <th>審核時間</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody id="reg-tbody">
-              <tr><td colspan="15" class="loading-cell">載入中...</td></tr>
+              <tr><td colspan="16" class="loading-cell">載入中...</td></tr>
             </tbody>
           </table>
         </div>
@@ -172,6 +182,36 @@
         <p class="settings-note">⚠️ 設定儲存在瀏覽器本機，若清除快取或換電腦需重新設定。如需永久儲存請串接 Firebase Remote Config。</p>
       </section>
 
+      <!-- ── 回收桶 ── -->
+      <section id="tab-trash" class="tab-section" style="display:none">
+        <div class="section-header">
+          <h1>回收桶</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
+          </div>
+        </div>
+        <p class="settings-note">這裡是被刪除的報名資料。可以「還原」拉回報名管理，或「永久刪除」徹底移除（無法復原）。</p>
+        <div class="table-wrap">
+          <table id="trash-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>刪除時間</th>
+                <th>課程</th>
+                <th>方案</th>
+                <th>姓名</th>
+                <th>電話</th>
+                <th>狀態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="trash-tbody">
+              <tr><td colspan="8" class="loading-cell">載入中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -180,6 +220,16 @@
     <div class="modal" onclick="event.stopPropagation()">
       <h3 id="modal-title">審核報名</h3>
       <div id="modal-body"></div>
+      <div class="admit-control" id="admit-control">
+        <label for="admit-select">招生狀態：</label>
+        <select id="admit-select" onchange="setAdmission(this.value)">
+          <option value="">自動</option>
+          <option value="admit">錄取</option>
+          <option value="wait">候補</option>
+          <option value="hold">待定</option>
+        </select>
+        <span id="admit-auto-hint" class="admit-hint"></span>
+      </div>
       <div class="modal-actions">
         <button class="btn btn-delete-reg" id="btn-delete-reg" onclick="deleteRegistration()">🗑 刪除</button>
         <button class="btn btn-danger"   id="btn-reject"  onclick="updateStatus('rejected')">拒絕</button>
@@ -281,6 +331,17 @@
         <label>方案與價格</label>
         <div id="c-plans"></div>
         <button class="btn btn-secondary btn-sm" onclick="addPlanRow()">＋ 加一個方案</button>
+      </div>
+
+      <div class="form-2col">
+        <div class="form-group">
+          <label>Leader 招生名額（留空 = 不限）</label>
+          <input id="c-leader-cap" type="number" min="0" placeholder="例：10">
+        </div>
+        <div class="form-group">
+          <label>Follower 招生名額（留空 = 不限）</label>
+          <input id="c-follower-cap" type="number" min="0" placeholder="例：10">
+        </div>
       </div>
 
       <div class="form-group">

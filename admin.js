@@ -57,19 +57,44 @@ function initFirebase() {
 // ── 載入報名資料 ──────────────────────────────────────────────
 async function loadRegistrations() {
   const tbody = document.getElementById('reg-tbody');
-  tbody.innerHTML = '<tr><td colspan="15" class="loading-cell">載入中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="16" class="loading-cell">載入中...</td></tr>';
 
   if (!db) { showDemoData(); return; }
 
   try {
+    await loadCourseCaps();
     const snap = await db.collection('registrations').orderBy('createdAt', 'desc').get();
     allRegistrations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     assignSeq();
     populateCourseFilter();
     applyFilters();
+    renderTrash();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="15" class="loading-cell">載入失敗：${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="16" class="loading-cell">載入失敗：${e.message}</td></tr>`;
   }
+}
+
+// ── 課程招生名額（給招生狀態計算用） ─────────────────────────
+let courseCaps = {};   // key: courseId 或 'name:課程名' → { capL, capF, name }
+async function loadCourseCaps() {
+  courseCaps = {};
+  if (!db) return;
+  try {
+    const snap = await db.collection('courses').get();
+    snap.docs.forEach(doc => {
+      const c = doc.data();
+      const entry = { capL: c.leaderCap ?? null, capF: c.followerCap ?? null, name: c.name };
+      courseCaps[doc.id] = entry;
+      if (c.name) courseCaps['name:' + c.name] = entry;
+    });
+  } catch (e) { /* 名額載入失敗不影響報名列表，當作不限 */ }
+}
+
+// 取得某筆報名所屬課程的名額（courseId 優先，課名備援）
+function getCaps(r) {
+  return courseCaps[r.courseId]
+      || courseCaps['name:' + r.courseName]
+      || { capL: null, capF: null, name: r.courseName };
 }
 
 // ── Demo 資料（Firebase 未設定時顯示） ───────────────────────
@@ -81,6 +106,7 @@ function showDemoData() {
   assignSeq();
   populateCourseFilter();
   applyFilters();
+  renderTrash();
 }
 
 // 顯示順序：desc = 新到舊（預設）, asc = 舊到新
@@ -98,15 +124,93 @@ function assignSeq() {
     .forEach((r, i) => { r.seq = i + 1; });
 }
 
+// ── 招生狀態計算（錄取 / 候補 / 待定） ───────────────────────
+// 依報名先後（seq 由小到大），每課程的 Leader / Follower 各自累加佔名額；
+// 雙人一筆同時佔 1 Leader + 1 Follower。手動覆寫（r.admission）優先。
+let admissionStats = {};   // courseKey → { name, capL, capF, lAdmit, fAdmit, lWait, fWait, hold }
+function computeAdmission() {
+  admissionStats = {};
+  const used = {};   // courseKey → { l, f }
+  const keyOf = r => r.courseId || ('name:' + r.courseName);
+
+  // 先清空，沒被計入（已拒絕/已刪除）的列招生欄會顯示「—」
+  allRegistrations.forEach(r => { r._admit = ''; r._admitAuto = ''; });
+
+  // 已拒絕 / 已刪除不佔名額（被拒絕者表格內招生欄會顯示「—」）
+  const ordered = allRegistrations
+    .filter(r => !r.deleted && r.status !== 'rejected')
+    .sort((a, b) => (a.seq || 0) - (b.seq || 0));
+
+  for (const r of ordered) {
+    const key  = keyOf(r);
+    const caps = getCaps(r);
+    if (!used[key]) used[key] = { l: 0, f: 0 };
+    if (!admissionStats[key]) {
+      admissionStats[key] = { name: caps.name || r.courseName, capL: caps.capL, capF: caps.capF,
+                              lAdmit: 0, fAdmit: 0, lWait: 0, fWait: 0, hold: 0 };
+    }
+    const st = admissionStats[key];
+    const u  = used[key];
+    const isDuo    = !!r.leaderName;
+    const isLeader = r.role === 'Leader';
+    const roomL = caps.capL == null || u.l < caps.capL;
+    const roomF = caps.capF == null || u.f < caps.capF;
+    const override = ['admit', 'wait', 'hold'].includes(r.admission) ? r.admission : null;
+
+    // 自動判定
+    let auto;
+    if (isDuo) {
+      auto = (roomL && roomF) ? 'admit' : (!roomL && !roomF) ? 'wait' : 'hold';
+    } else {
+      auto = (isLeader ? roomL : roomF) ? 'admit' : 'wait';
+    }
+    const effective = override || auto;
+
+    // 佔用名額（依最終結果）
+    if (effective === 'admit') {
+      if (isDuo) { u.l++; u.f++; }
+      else if (isLeader) u.l++; else u.f++;
+    }
+
+    // 課程統計
+    if (isDuo) {
+      if (effective === 'admit')      { st.lAdmit++; st.fAdmit++; }
+      else if (effective === 'wait')  { st.lWait++;  st.fWait++;  }
+      else                            { st.hold++; }
+    } else {
+      if (effective === 'admit')      { isLeader ? st.lAdmit++ : st.fAdmit++; }
+      else if (effective === 'wait')  { isLeader ? st.lWait++  : st.fWait++;  }
+    }
+
+    const noCaps = caps.capL == null && caps.capF == null;
+    r._admitAuto = noCaps ? 'none' : auto;
+    r._admit     = (noCaps && !override) ? 'none' : effective;
+  }
+}
+
+function admitLabel(a) {
+  return { admit: '錄取', wait: '候補', hold: '待定', none: '不限' }[a] || '—';
+}
+
+function admitBadge(a) {
+  if (!a || a === 'none') return '<span class="admit-none">—</span>';
+  return `<span class="badge badge-${a}">${admitLabel(a)}</span>`;
+}
+
 // ── 過濾 & 渲染表格 ───────────────────────────────────────────
 function applyFilters() {
+  computeAdmission();
+
   const statusF = document.getElementById('filter-status').value;
   const courseF = document.getElementById('filter-course').value;
   const roleF   = document.getElementById('filter-role').value;
+  const admitF  = document.getElementById('filter-admit').value;
 
   const filtered = allRegistrations.filter(r => {
+    if (r.deleted) return false;
     if (statusF && r.status !== statusF) return false;
     if (courseF && r.courseName !== courseF) return false;
+    if (admitF && r._admit !== admitF) return false;
     if (roleF) {
       const isDuo = !!r.leaderName;
       // 雙人含 leader + follower，兩種角色都算；單人看本人 role
@@ -122,15 +226,40 @@ function applyFilters() {
 
   renderTable(filtered, roleF);
   renderStats();
+  renderCapacitySummary();
   const master = document.getElementById('select-all');
   if (master) { master.checked = false; }
   updateBulkBar();
 }
 
+// ── 招生額度摘要（每課程目前 Leader / Follower 報名人數） ─────
+function renderCapacitySummary() {
+  const wrap = document.getElementById('capacity-summary');
+  if (!wrap) return;
+  const cards = Object.values(admissionStats)
+    .filter(s => s.capL != null || s.capF != null)
+    .map(s => {
+      const line = (label, admit, cap, wait) => {
+        if (cap == null) return `<div class="cap-line">${label}：${admit} 人（不限）</div>`;
+        const full = admit >= cap;
+        return `<div class="cap-line ${full ? 'cap-full' : ''}">${label}：<b>${admit}/${cap}</b>${wait ? ` ・候補 ${wait}` : ''}</div>`;
+      };
+      return `<div class="cap-card">
+        <div class="cap-name">${s.name}</div>
+        ${line('Leader', s.lAdmit, s.capL, s.lWait)}
+        ${line('Follower', s.fAdmit, s.capF, s.fWait)}
+        ${s.hold ? `<div class="cap-line cap-hold">待定 ${s.hold} 組（雙人卡名額，待人工判斷）</div>` : ''}
+      </div>`;
+    });
+  wrap.innerHTML = cards.length
+    ? `<div class="cap-title">招生額度</div><div class="cap-grid">${cards.join('')}</div>`
+    : '';
+}
+
 function renderTable(rows, roleF = '') {
   const tbody = document.getElementById('reg-tbody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="15" class="loading-cell">沒有資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16" class="loading-cell">沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r => {
@@ -165,6 +294,7 @@ function renderTable(rows, roleF = '') {
       <td>${r.transferCode}</td>
       <td>${r.referral || '—'}</td>
       <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
+      <td>${admitBadge(r._admit)}</td>
       <td>${r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}</td>
       <td>
         <button class="btn btn-secondary btn-sm" onclick="openModal('${r.id}')">查看</button>
@@ -178,10 +308,11 @@ function statusLabel(s) {
 }
 
 function renderStats() {
-  const total    = allRegistrations.length;
-  const pending  = allRegistrations.filter(r => r.status === 'pending').length;
-  const approved = allRegistrations.filter(r => r.status === 'approved').length;
-  const rejected = allRegistrations.filter(r => r.status === 'rejected').length;
+  const active   = allRegistrations.filter(r => !r.deleted);
+  const total    = active.length;
+  const pending  = active.filter(r => r.status === 'pending').length;
+  const approved = active.filter(r => r.status === 'approved').length;
+  const rejected = active.filter(r => r.status === 'rejected').length;
   document.getElementById('stats-row').innerHTML = `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">總報名數</div></div>
     <div class="stat-card stat-pending"><div class="stat-num">${pending}</div><div class="stat-label">待審核</div></div>
@@ -246,7 +377,39 @@ function openModal(docId) {
   document.getElementById('btn-approve').style.display = isPending ? '' : 'none';
   document.getElementById('btn-reject').style.display  = isPending ? '' : 'none';
 
+  // 招生狀態手動覆寫（只有設定過名額的課程才顯示）
+  const caps = getCaps(r);
+  const hasCap = caps.capL != null || caps.capF != null;
+  document.getElementById('admit-control').style.display = hasCap ? '' : 'none';
+  if (hasCap) {
+    document.getElementById('admit-select').value =
+      ['admit', 'wait', 'hold'].includes(r.admission) ? r.admission : '';
+    document.getElementById('admit-auto-hint').textContent =
+      r.admission ? `（手動指定，自動判定為「${admitLabel(r._admitAuto)}」）` : '（依報名順序自動判定）';
+  }
+
   document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+// 手動覆寫招生狀態（''＝恢復自動）
+async function setAdmission(value) {
+  if (!currentDocId) return;
+  const r = allRegistrations.find(x => x.id === currentDocId);
+  if (!r) return;
+  const val = ['admit', 'wait', 'hold'].includes(value) ? value : null;
+
+  if (db && !currentDocId.startsWith('demo')) {
+    try {
+      await db.collection('registrations').doc(currentDocId).update({
+        admission: val === null ? firebase.firestore.FieldValue.delete() : val,
+      });
+    } catch (e) { alert('更新失敗：' + e.message); return; }
+  }
+  if (val === null) delete r.admission; else r.admission = val;
+
+  applyFilters();   // 重算所有人的招生狀態並重繪
+  document.getElementById('admit-auto-hint').textContent =
+    r.admission ? `（手動指定，自動判定為「${admitLabel(r._admitAuto)}」）` : '（依報名順序自動判定）';
 }
 
 function closeModal() {
@@ -286,19 +449,22 @@ async function deleteRegistration() {
   if (!r) return;
 
   const who = r.name || `${r.leaderName} / ${r.followerName}`;
-  if (!confirm(`確定要刪除「${who} — ${r.courseName} ${r.planName}」這筆報名嗎？\n刪除後無法復原！`)) return;
+  if (!confirm(`確定要刪除「${who} — ${r.courseName} ${r.planName}」這筆報名嗎？\n會移到回收桶，之後可在「🗑 回收桶」還原。`)) return;
 
+  const deletedAt = new Date().toISOString();
   if (db && !currentDocId.startsWith('demo')) {
     try {
-      await db.collection('registrations').doc(currentDocId).delete();
+      await db.collection('registrations').doc(currentDocId).update({ deleted: true, deletedAt });
     } catch (e) {
       alert('刪除失敗：' + e.message); return;
     }
   }
 
-  allRegistrations = allRegistrations.filter(x => x.id !== currentDocId);
+  r.deleted = true;
+  r.deletedAt = deletedAt;
   closeModal();
   applyFilters();
+  renderTrash();
 }
 
 // ── 批次勾選刪除 ─────────────────────────────────────────────
@@ -317,23 +483,91 @@ function updateBulkBar() {
 async function bulkDelete() {
   const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
   if (!ids.length) return;
-  if (!confirm(`確定要刪除勾選的 ${ids.length} 筆報名資料嗎？\n刪除後無法復原！`)) return;
+  if (!confirm(`確定要刪除勾選的 ${ids.length} 筆報名資料嗎？\n會移到回收桶，之後可在「🗑 回收桶」還原。`)) return;
 
+  const deletedAt = new Date().toISOString();
   if (db) {
     try {
       const batch = db.batch();
       ids.filter(id => !id.startsWith('demo'))
-         .forEach(id => batch.delete(db.collection('registrations').doc(id)));
+         .forEach(id => batch.update(db.collection('registrations').doc(id), { deleted: true, deletedAt }));
       await batch.commit();
     } catch (e) {
       alert('刪除失敗：' + e.message); return;
     }
   }
 
-  allRegistrations = allRegistrations.filter(r => !ids.includes(r.id));
+  allRegistrations.forEach(r => { if (ids.includes(r.id)) { r.deleted = true; r.deletedAt = deletedAt; } });
   document.getElementById('select-all').checked = false;
   applyFilters();
+  renderTrash();
   updateBulkBar();
+}
+
+// ── 回收桶 ───────────────────────────────────────────────────
+function renderTrash() {
+  const tbody = document.getElementById('trash-tbody');
+  if (!tbody) return;
+  const rows = allRegistrations
+    .filter(r => r.deleted)
+    .sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-cell">回收桶是空的</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const isDuo = !!r.leaderName;
+    const name  = isDuo ? `${r.leaderName} / ${r.followerName}` : (r.name || '');
+    const phone = isDuo ? `${r.leaderPhone} / ${r.followerPhone}` : (r.phone || '');
+    const del   = r.deletedAt
+      ? new Date(r.deletedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    return `<tr>
+      <td>${r.seq || ''}</td>
+      <td>${del}</td>
+      <td>${r.courseName}</td>
+      <td>${r.planName}</td>
+      <td>${name}</td>
+      <td>${phone}</td>
+      <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
+      <td>
+        <button class="btn btn-success btn-sm" onclick="restoreRegistration('${r.id}')">還原</button>
+        <button class="btn btn-danger btn-sm" onclick="permanentDelete('${r.id}')">永久刪除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function restoreRegistration(id) {
+  const r = allRegistrations.find(x => x.id === id);
+  if (!r) return;
+  if (db && !id.startsWith('demo')) {
+    try {
+      await db.collection('registrations').doc(id).update({
+        deleted:   firebase.firestore.FieldValue.delete(),
+        deletedAt: firebase.firestore.FieldValue.delete(),
+      });
+    } catch (e) { alert('還原失敗：' + e.message); return; }
+  }
+  delete r.deleted;
+  delete r.deletedAt;
+  applyFilters();
+  renderTrash();
+}
+
+async function permanentDelete(id) {
+  const r = allRegistrations.find(x => x.id === id);
+  if (!r) return;
+  const who = r.name || `${r.leaderName} / ${r.followerName}`;
+  if (!confirm(`確定要永久刪除「${who} — ${r.courseName}」嗎？\n此動作無法復原！`)) return;
+  if (db && !id.startsWith('demo')) {
+    try {
+      await db.collection('registrations').doc(id).delete();
+    } catch (e) { alert('刪除失敗：' + e.message); return; }
+  }
+  allRegistrations = allRegistrations.filter(x => x.id !== id);
+  renderTrash();
 }
 
 // ── Email 通知（透過 Resend） ────────────────────────────────
@@ -364,25 +598,26 @@ async function sendStatusEmail(toEmail, name, courseName, status) {
 
 // ── 匯出 Excel（CSV） ────────────────────────────────────────
 function exportExcel() {
-  const headers = ['編號','報名時間','課程','方案','角色','姓名','電話','Email','金額','後五碼','推薦人','狀態','審核時間'];
+  const headers = ['編號','報名時間','課程','方案','角色','姓名','電話','Email','金額','後五碼','推薦人','狀態','招生','審核時間'];
   // 一般欄位用引號包；電話、後五碼用 ="..." 強制 Excel 當文字，避免 0 開頭消失或變科學記號
   const q    = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
   const qTxt = v => { const s = String(v ?? ''); return s ? `="${s.replace(/"/g,'""')}"` : '""'; };
-  const makeRow = (seq, time, course, plan, role, name, phone, email, total, code, ref, status, reviewed) =>
-    [q(seq), q(time), q(course), q(plan), q(role), q(name), qTxt(phone), q(email), q(total), qTxt(code), q(ref), q(status), q(reviewed)].join(',');
+  const makeRow = (seq, time, course, plan, role, name, phone, email, total, code, ref, status, admit, reviewed) =>
+    [q(seq), q(time), q(course), q(plan), q(role), q(name), qTxt(phone), q(email), q(total), qTxt(code), q(ref), q(status), q(admit), q(reviewed)].join(',');
 
-  const rows = allRegistrations.flatMap(r => {
+  const rows = allRegistrations.filter(r => !r.deleted).flatMap(r => {
     const time = new Date(r.createdAt).toLocaleString('zh-TW');
     const reviewed = r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW') : '';
     const status = statusLabel(r.status);
+    const admit  = (r._admit && r._admit !== 'none') ? admitLabel(r._admit) : '';
     const isDuo = !!r.leaderName;
     if (!isDuo) {
-      return [makeRow(r.seq, time, r.courseName, r.planName, r.role || '', r.name, r.phone, r.email, r.total, r.transferCode, r.referral || '', status, reviewed)];
+      return [makeRow(r.seq, time, r.courseName, r.planName, r.role || '', r.name, r.phone, r.email, r.total, r.transferCode, r.referral || '', status, admit, reviewed)];
     }
     // 雙人拆兩行：金額/後五碼/Email/推薦人只記在 Leader 行，避免重複計算
     return [
-      makeRow(r.seq, time, r.courseName, r.planName, 'Leader',   r.leaderName,   r.leaderPhone,   r.payerEmail, r.total, r.transferCode, r.referral || '', status, reviewed),
-      makeRow(r.seq, time, r.courseName, r.planName, 'Follower', r.followerName, r.followerPhone, '',           '',      '',              '',               status, reviewed),
+      makeRow(r.seq, time, r.courseName, r.planName, 'Leader',   r.leaderName,   r.leaderPhone,   r.payerEmail, r.total, r.transferCode, r.referral || '', status, admit, reviewed),
+      makeRow(r.seq, time, r.courseName, r.planName, 'Follower', r.followerName, r.followerPhone, '',           '',      '',              '',               status, admit, reviewed),
     ];
   });
 
@@ -406,6 +641,7 @@ function switchTab(tab) {
 
   if (tab === 'settings') loadSettingsForm();
   if (tab === 'courses') loadCourseList();
+  if (tab === 'trash') renderTrash();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -511,6 +747,8 @@ function openCourseForm(courseId = null, type = 'course') {
   document.getElementById('c-teacher-en').value      = c?.teacherEn || '';
   document.getElementById('c-teacher-desc-en').value = c?.teacherDescEn || '';
   document.getElementById('c-referral').checked = c ? c.referralEnabled !== false : true;
+  document.getElementById('c-leader-cap').value   = (c?.leaderCap   ?? '') === '' ? '' : c.leaderCap;
+  document.getElementById('c-follower-cap').value = (c?.followerCap ?? '') === '' ? '' : c.followerCap;
   document.getElementById('c-photo').value    = '';
   document.getElementById('c-photo-preview').innerHTML =
     c?.photo ? `<img src="${c.photo}">` : '';
@@ -562,6 +800,14 @@ function handlePhotoUpload(input) {
   img.src = URL.createObjectURL(file);
 }
 
+// 名額輸入轉換：留空或非數字 = null（不限），其餘取 >=0 整數
+function parseCap(v) {
+  const s = String(v ?? '').trim();
+  if (s === '') return null;
+  const n = Math.floor(Number(s));
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
 // ── 儲存課程 ─────────────────────────────────────────────────
 async function saveCourse() {
   const err = document.getElementById('c-err');
@@ -599,6 +845,8 @@ async function saveCourse() {
     plans,
     photo:  uploadedPhoto !== null ? uploadedPhoto : (existing?.photo || ''),
     referralEnabled: document.getElementById('c-referral').checked,
+    leaderCap:   parseCap(document.getElementById('c-leader-cap').value),
+    followerCap: parseCap(document.getElementById('c-follower-cap').value),
     type:   editingType,
     order:  existing?.order ?? adminCourses.length,
     active: existing ? existing.active !== false : true,   // 保留原本的顯示/隱藏狀態

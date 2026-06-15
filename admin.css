@@ -204,6 +204,47 @@ tr:hover td { background: var(--surface); }
 .badge-approved { background: #0a2e14; color: var(--success); }
 .badge-rejected { background: #2e0a0a; color: var(--danger); }
 
+/* 招生狀態徽章：錄取=綠、候補=紅、待定=黃 */
+.badge-admit { background: #0a2e14; color: var(--success); }
+.badge-wait  { background: #2e0a0a; color: var(--danger); }
+.badge-hold  { background: #3d2f00; color: var(--warning); }
+.admit-none  { color: var(--muted, #888); }
+
+/* 招生額度摘要 */
+.capacity-summary { margin: .25rem 0 1rem; }
+.cap-title { font-size: .8rem; font-weight: 700; color: var(--muted, #999); margin-bottom: .5rem; }
+.cap-grid  { display: flex; flex-wrap: wrap; gap: .75rem; }
+.cap-card  {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .6rem .85rem;
+  min-width: 180px;
+}
+.cap-name  { font-weight: 700; margin-bottom: .35rem; }
+.cap-line  { font-size: .82rem; line-height: 1.6; }
+.cap-line.cap-full { color: var(--danger); font-weight: 700; }
+.cap-line.cap-hold { color: var(--warning); }
+
+/* 招生狀態手動覆寫（Modal 內） */
+.admit-control {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin: 1rem 0 .25rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--border);
+}
+.admit-control select {
+  padding: .35rem .55rem;
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.admit-hint { font-size: .78rem; color: var(--muted, #999); }
+
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn {
   padding: .55rem 1.1rem;
