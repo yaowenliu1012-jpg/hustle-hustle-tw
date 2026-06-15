@@ -271,6 +271,33 @@ tr:hover td { background: var(--surface); }
 .archive-meta { font-size: .82rem; color: var(--muted, #999); margin-top: .25rem; }
 .archive-table { font-size: .85rem; }
 
+/* 結案卡：課程詳細資料 */
+.archive-detail {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .85rem 1rem;
+  margin-bottom: 1rem;
+}
+.archive-photo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.archive-detail-table { font-size: .85rem; border-collapse: collapse; }
+.archive-detail-table td { padding: .3rem .5rem; vertical-align: top; }
+.archive-detail-table td:first-child {
+  color: var(--muted, #999);
+  white-space: nowrap;
+  font-weight: 600;
+}
+.archive-subhead { font-size: .9rem; font-weight: 700; margin: .25rem 0 .5rem; }
+
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn {
   padding: .55rem 1.1rem;

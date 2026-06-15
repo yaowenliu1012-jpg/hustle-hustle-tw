@@ -823,6 +823,28 @@ function renderArchives() {
       </tr>`;
     }).join('') : '<tr><td colspan="10" class="loading-cell">這份歸檔沒有報名資料</td></tr>';
 
+    // 課程詳細資料（有填才列）
+    const cap = v => (v == null ? '不限' : v);
+    const field = (label, val) => val ? `<tr><td>${label}</td><td>${val}</td></tr>` : '';
+    const sessions = (c.sessions || []).filter(Boolean).join('、');
+    const plansTxt = (c.plans || []).map(p => `${p.label} NT$${Number(p.price).toLocaleString()}`).join('｜');
+    const detail = `
+      <div class="archive-detail">
+        ${c.photo ? `<img src="${c.photo}" class="archive-photo">` : ''}
+        <table class="archive-detail-table">
+          ${field('類型', c.type === 'event' ? '活動' : '課程')}
+          ${field('英文名', (c.nameEn && c.nameEn !== c.name) ? c.nameEn : '')}
+          ${field('課程描述', c.description ? c.description.replace(/\n/g, '<br>') : '')}
+          ${field('時段', sessions)}
+          ${field('地點', c.location)}
+          ${field('師資', c.teacher)}
+          ${field('師資介紹', c.teacherDesc ? c.teacherDesc.replace(/\n/g, '<br>') : '')}
+          ${field('方案與價格', plansTxt)}
+          ${field('招生名額', `Leader ${cap(c.leaderCap)}　Follower ${cap(c.followerCap)}`)}
+          ${field('推薦人優惠', c.referralEnabled === false ? '關閉' : '開啟')}
+        </table>
+      </div>`;
+
     return `<div class="archive-card">
       <div class="archive-head">
         <div>
@@ -831,6 +853,8 @@ function renderArchives() {
         </div>
         <button class="btn btn-secondary btn-sm" onclick="exportArchive('${c.id}')">匯出 Excel</button>
       </div>
+      ${detail}
+      <div class="archive-subhead">報名明細</div>
       <div class="table-wrap">
         <table class="archive-table">
           <thead><tr>
