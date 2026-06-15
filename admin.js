@@ -726,6 +726,7 @@ async function loadCourseList() {
         <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
         <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, 1)" ${i === adminCourses.length - 1 ? 'disabled' : ''}>↓</button>
         <button class="btn btn-primary btn-sm" onclick="openCourseForm('${c.id}')">編輯</button>
+        <button class="btn btn-secondary btn-sm" onclick="duplicateCourse('${c.id}')">${c.type === 'event' ? '複製新活動' : '複製新課程'}</button>
         <button class="btn btn-secondary btn-sm" onclick="toggleCourseActive('${c.id}')">${hidden ? '顯示' : '隱藏'}</button>
         <button class="btn btn-archive btn-sm" onclick="archiveCourse('${c.id}')">結案</button>
       </div>
@@ -741,6 +742,33 @@ async function toggleCourseActive(courseId) {
     loadCourseList();
   } catch (e) {
     alert('切換失敗：' + e.message);
+  }
+}
+
+// ── 複製課程／活動（沿用介紹資訊，預設隱藏） ────────────────
+async function duplicateCourse(courseId) {
+  const c = adminCourses.find(x => x.id === courseId);
+  if (!c) return;
+  const typeName = c.type === 'event' ? '活動' : '課程';
+  if (!confirm(`要複製「${c.name}」嗎？\n會新增一個相同的${typeName}（預設隱藏），方便沿用介紹資訊，再去編輯時段/名額即可。`)) return;
+
+  // 複製全部欄位，去掉文件 id 與結案狀態，改成隱藏、排在最後
+  const { id, ...rest } = c;
+  const data = { ...rest };
+  delete data.archived;
+  delete data.closedAt;
+  data.name   = c.name + '（複製）';
+  if (!data.nameEn || data.nameEn === c.name) data.nameEn = data.name;
+  data.active = false;                 // 預設隱藏，不會出現在前台
+  data.order  = adminCourses.length;   // 排在課程列表最後
+
+  try {
+    await db.collection('courses').add(data);
+    await loadCourseCaps();
+    loadCourseList();
+    alert(`已複製成「${data.name}」（預設隱藏）。請編輯後再按「顯示」開放報名。`);
+  } catch (e) {
+    alert('複製失敗：' + e.message);
   }
 }
 
