@@ -74,27 +74,43 @@ async function loadRegistrations() {
   }
 }
 
-// ── 課程招生名額（給招生狀態計算用） ─────────────────────────
-let courseCaps = {};   // key: courseId 或 'name:課程名' → { capL, capF, name }
+// ── 課程資料（名額計算 + 課名/方案即時連動） ───────────────
+let regCourses = [];   // 目前課程管理裡的全部課程（含名額、方案）
 async function loadCourseCaps() {
-  courseCaps = {};
+  regCourses = [];
   if (!db) return;
   try {
     const snap = await db.collection('courses').get();
-    snap.docs.forEach(doc => {
-      const c = doc.data();
-      const entry = { capL: c.leaderCap ?? null, capF: c.followerCap ?? null, name: c.name };
-      courseCaps[doc.id] = entry;
-      if (c.name) courseCaps['name:' + c.name] = entry;
-    });
-  } catch (e) { /* 名額載入失敗不影響報名列表，當作不限 */ }
+    regCourses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { /* 課程載入失敗不影響報名列表，名額當作不限、課名用報名當下的快照 */ }
 }
 
-// 取得某筆報名所屬課程的名額（courseId 優先，課名備援）
+// 找出某筆報名對應的課程（courseId 優先，課名備援給無 id 的舊資料）
+function courseOf(r) {
+  return regCourses.find(c => c.id === r.courseId)
+      || regCourses.find(c => c.name === r.courseName)
+      || null;
+}
+
+// 取得名額（courseId 對應的課程沒設＝不限）
 function getCaps(r) {
-  return courseCaps[r.courseId]
-      || courseCaps['name:' + r.courseName]
-      || { capL: null, capF: null, name: r.courseName };
+  const c = courseOf(r);
+  if (!c) return { capL: null, capF: null, name: r.courseName };
+  return { capL: c.leaderCap ?? null, capF: c.followerCap ?? null, name: c.name || r.courseName };
+}
+
+// 即時課名／方案名：以課程管理現況為準，找不到才回退報名當下的快照
+function courseNameOf(r) {
+  const c = courseOf(r);
+  return (c && c.name) || r.courseName;
+}
+function planNameOf(r) {
+  const c = courseOf(r);
+  if (c && Array.isArray(c.plans) && r.planId) {
+    const p = c.plans.find(pl => pl.id === r.planId);
+    if (p && p.label) return p.label;
+  }
+  return r.planName;
 }
 
 // ── Demo 資料（Firebase 未設定時顯示） ───────────────────────
@@ -209,7 +225,7 @@ function applyFilters() {
   const filtered = allRegistrations.filter(r => {
     if (r.deleted) return false;
     if (statusF && r.status !== statusF) return false;
-    if (courseF && r.courseName !== courseF) return false;
+    if (courseF && courseNameOf(r) !== courseF) return false;
     if (admitF && r._admit !== admitF) return false;
     if (roleF) {
       const isDuo = !!r.leaderName;
@@ -284,8 +300,8 @@ function renderTable(rows, roleF = '') {
       <td><input type="checkbox" class="row-check" data-id="${r.id}" onchange="updateBulkBar()"></td>
       <td>${r.seq || ''}</td>
       <td>${date}</td>
-      <td>${r.courseName}</td>
-      <td>${r.planName}</td>
+      <td>${courseNameOf(r)}</td>
+      <td>${planNameOf(r)}</td>
       <td>${roleCol}</td>
       <td>${name}</td>
       <td>${phone}</td>
@@ -326,7 +342,7 @@ function populateCourseFilter() {
   const current = sel.value;
 
   // 從實際報名資料抓出所有課程/活動名稱（包含已刪除的課程，舊資料仍可篩選）
-  const names = [...new Set(allRegistrations.map(r => r.courseName).filter(Boolean))];
+  const names = [...new Set(allRegistrations.map(r => courseNameOf(r)).filter(Boolean))];
 
   sel.innerHTML = '<option value="">全部課程／活動</option>' +
     names.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
@@ -342,10 +358,10 @@ function openModal(docId) {
   if (!r) return;
 
   const isDuo = !!r.leaderName;
-  document.getElementById('modal-title').textContent = `${r.courseName} — ${r.planName}`;
+  document.getElementById('modal-title').textContent = `${courseNameOf(r)} — ${planNameOf(r)}`;
 
   const rows = isDuo ? [
-    ['課程', r.courseName], ['方案', r.planName],
+    ['課程', courseNameOf(r)], ['方案', planNameOf(r)],
     ['Leader', `${r.leaderName} / ${r.leaderPhone}`],
     ...(r.leaderEmail ? [['Leader Email', r.leaderEmail]] : []),
     ['Follower', `${r.followerName} / ${r.followerPhone}`],
@@ -358,7 +374,7 @@ function openModal(docId) {
     ['報名時間', new Date(r.createdAt).toLocaleString('zh-TW')],
     ...(r.reviewedAt ? [['審核時間', new Date(r.reviewedAt).toLocaleString('zh-TW')]] : []),
   ] : [
-    ['課程', r.courseName], ['方案', r.planName],
+    ['課程', courseNameOf(r)], ['方案', planNameOf(r)],
     ['姓名', r.name], ['電話', r.phone], ['Email', r.email], ['角色', r.role],
     ['金額', `NT$${Number(r.total).toLocaleString()}`],
     ['後五碼', r.transferCode],
@@ -439,7 +455,7 @@ async function updateStatus(newStatus) {
   // 寄送 Email 通知
   const email = r.payerEmail || r.email || r.leaderEmail;
   if (email) {
-    sendStatusEmail(email, r.name || r.leaderName, r.courseName, newStatus);
+    sendStatusEmail(email, r.name || r.leaderName, courseNameOf(r), newStatus);
   }
 }
 
@@ -449,7 +465,7 @@ async function deleteRegistration() {
   if (!r) return;
 
   const who = r.name || `${r.leaderName} / ${r.followerName}`;
-  if (!confirm(`確定要刪除「${who} — ${r.courseName} ${r.planName}」這筆報名嗎？\n會移到回收桶，之後可在「🗑 回收桶」還原。`)) return;
+  if (!confirm(`確定要刪除「${who} — ${courseNameOf(r)} ${planNameOf(r)}」這筆報名嗎？\n會移到「刪除資料」，之後可在那裡還原。`)) return;
 
   const deletedAt = new Date().toISOString();
   if (db && !currentDocId.startsWith('demo')) {
@@ -541,8 +557,8 @@ function renderTrash() {
     return `<tr>
       <td>${r.seq || ''}</td>
       <td>${del}</td>
-      <td>${r.courseName}</td>
-      <td>${r.planName}</td>
+      <td>${courseNameOf(r)}</td>
+      <td>${planNameOf(r)}</td>
       <td>${name}</td>
       <td>${phone}</td>
       <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
@@ -575,7 +591,7 @@ async function permanentDelete(id) {
   const r = allRegistrations.find(x => x.id === id);
   if (!r) return;
   const who = r.name || `${r.leaderName} / ${r.followerName}`;
-  if (!confirm(`確定要永久刪除「${who} — ${r.courseName}」嗎？\n此動作無法復原！`)) return;
+  if (!confirm(`確定要永久刪除「${who} — ${courseNameOf(r)}」嗎？\n此動作無法復原！`)) return;
   if (db && !id.startsWith('demo')) {
     try {
       await db.collection('registrations').doc(id).delete();
@@ -626,13 +642,15 @@ function exportExcel() {
     const status = statusLabel(r.status);
     const admit  = (r._admit && r._admit !== 'none') ? admitLabel(r._admit) : '';
     const isDuo = !!r.leaderName;
+    const cName = courseNameOf(r);
+    const pName = planNameOf(r);
     if (!isDuo) {
-      return [makeRow(r.seq, time, r.courseName, r.planName, r.role || '', r.name, r.phone, r.email, r.total, r.transferCode, r.referral || '', status, admit, reviewed)];
+      return [makeRow(r.seq, time, cName, pName, r.role || '', r.name, r.phone, r.email, r.total, r.transferCode, r.referral || '', status, admit, reviewed)];
     }
     // 雙人拆兩行：金額/後五碼/Email/推薦人只記在 Leader 行，避免重複計算
     return [
-      makeRow(r.seq, time, r.courseName, r.planName, 'Leader',   r.leaderName,   r.leaderPhone,   r.payerEmail, r.total, r.transferCode, r.referral || '', status, admit, reviewed),
-      makeRow(r.seq, time, r.courseName, r.planName, 'Follower', r.followerName, r.followerPhone, '',           '',      '',              '',               status, admit, reviewed),
+      makeRow(r.seq, time, cName, pName, 'Leader',   r.leaderName,   r.leaderPhone,   r.payerEmail, r.total, r.transferCode, r.referral || '', status, admit, reviewed),
+      makeRow(r.seq, time, cName, pName, 'Follower', r.followerName, r.followerPhone, '',           '',      '',              '',               status, admit, reviewed),
     ];
   });
 
