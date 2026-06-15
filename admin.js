@@ -504,8 +504,23 @@ async function bulkDelete() {
   updateBulkBar();
 }
 
-// ── 回收桶 ───────────────────────────────────────────────────
+// ── 刪除資料（報名管理頁內可展開區塊） ──────────────────────
+function toggleTrash() {
+  const panel = document.getElementById('trash-panel');
+  panel.style.display = panel.style.display === 'none' ? '' : 'none';
+  renderTrash();
+}
+
+function updateTrashButton() {
+  const btn = document.getElementById('btn-toggle-trash');
+  if (!btn) return;
+  const n = allRegistrations.filter(r => r.deleted).length;
+  const open = document.getElementById('trash-panel')?.style.display !== 'none';
+  btn.textContent = open ? `🗑 收合刪除資料（${n}）` : `🗑 刪除資料${n ? `（${n}）` : ''}`;
+}
+
 function renderTrash() {
+  updateTrashButton();
   const tbody = document.getElementById('trash-tbody');
   if (!tbody) return;
   const rows = allRegistrations
@@ -641,7 +656,6 @@ function switchTab(tab) {
 
   if (tab === 'settings') loadSettingsForm();
   if (tab === 'courses') loadCourseList();
-  if (tab === 'trash') renderTrash();
 }
 
 // ════════════════════════════════════════════════════════════

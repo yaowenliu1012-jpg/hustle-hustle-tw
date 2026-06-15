@@ -33,7 +33,6 @@
         <a class="nav-item active" data-tab="registrations" onclick="switchTab('registrations')">📋 報名管理</a>
         <a class="nav-item" data-tab="courses" onclick="switchTab('courses')">💃 課程管理</a>
         <a class="nav-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 設定</a>
-        <a class="nav-item" data-tab="trash" onclick="switchTab('trash')">🗑 回收桶</a>
       </nav>
       <button class="btn btn-logout" onclick="doLogout()">登出</button>
     </aside>
@@ -67,6 +66,7 @@
             </select>
             <button class="btn btn-secondary" id="btn-sort" onclick="toggleSort()">↓ 新到舊</button>
             <button class="btn btn-danger" id="btn-bulk-delete" onclick="bulkDelete()" style="display:none">🗑 刪除勾選</button>
+            <button class="btn btn-secondary" id="btn-toggle-trash" onclick="toggleTrash()">🗑 刪除資料</button>
             <button class="btn btn-secondary" onclick="exportExcel()">匯出 Excel</button>
             <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
           </div>
@@ -102,6 +102,31 @@
               <tr><td colspan="16" class="loading-cell">載入中...</td></tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- 刪除資料（被刪除的報名，可還原 / 永久刪除） -->
+        <div id="trash-panel" class="trash-panel" style="display:none">
+          <h2 class="trash-heading">刪除資料</h2>
+          <p class="settings-note">這裡是被刪除的報名資料。可以「還原」拉回上方列表，或「永久刪除」徹底移除（無法復原）。</p>
+          <div class="table-wrap">
+            <table id="trash-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>刪除時間</th>
+                  <th>課程</th>
+                  <th>方案</th>
+                  <th>姓名</th>
+                  <th>電話</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="trash-tbody">
+                <tr><td colspan="8" class="loading-cell">載入中...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -180,36 +205,6 @@
           <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
         </div>
         <p class="settings-note">⚠️ 設定儲存在瀏覽器本機，若清除快取或換電腦需重新設定。如需永久儲存請串接 Firebase Remote Config。</p>
-      </section>
-
-      <!-- ── 回收桶 ── -->
-      <section id="tab-trash" class="tab-section" style="display:none">
-        <div class="section-header">
-          <h1>回收桶</h1>
-          <div class="header-actions">
-            <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
-          </div>
-        </div>
-        <p class="settings-note">這裡是被刪除的報名資料。可以「還原」拉回報名管理，或「永久刪除」徹底移除（無法復原）。</p>
-        <div class="table-wrap">
-          <table id="trash-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>刪除時間</th>
-                <th>課程</th>
-                <th>方案</th>
-                <th>姓名</th>
-                <th>電話</th>
-                <th>狀態</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="trash-tbody">
-              <tr><td colspan="8" class="loading-cell">載入中...</td></tr>
-            </tbody>
-          </table>
-        </div>
       </section>
 
     </main>

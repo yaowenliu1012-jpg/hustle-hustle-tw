@@ -245,6 +245,10 @@ tr:hover td { background: var(--surface); }
 }
 .admit-hint { font-size: .78rem; color: var(--muted, #999); }
 
+/* 刪除資料（報名管理頁內展開區塊） */
+.trash-panel { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px dashed var(--border); }
+.trash-heading { font-size: 1.1rem; margin: 0 0 .4rem; }
+
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn {
   padding: .55rem 1.1rem;
