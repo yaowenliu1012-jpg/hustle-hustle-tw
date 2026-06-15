@@ -267,6 +267,7 @@ tr:hover td { background: var(--surface); }
   gap: 1rem;
   margin-bottom: .75rem;
 }
+.archive-actions { display: flex; gap: .5rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .archive-name { font-size: 1.1rem; font-weight: 700; }
 .archive-meta { font-size: .82rem; color: var(--muted, #999); margin-top: .25rem; }
 .archive-table { font-size: .85rem; }

@@ -746,11 +746,12 @@ async function toggleCourseActive(courseId) {
 }
 
 // ── 複製課程／活動（沿用介紹資訊，預設隱藏） ────────────────
+// 來源可為課程管理（adminCourses）或結案資料（regCourses 內的 archived 課程）
 async function duplicateCourse(courseId) {
-  const c = adminCourses.find(x => x.id === courseId);
+  const c = regCourses.find(x => x.id === courseId) || adminCourses.find(x => x.id === courseId);
   if (!c) return;
   const typeName = c.type === 'event' ? '活動' : '課程';
-  if (!confirm(`要複製「${c.name}」嗎？\n會新增一個相同的${typeName}（預設隱藏），方便沿用介紹資訊，再去編輯時段/名額即可。`)) return;
+  if (!confirm(`要複製「${c.name}」嗎？\n會在「課程管理」新增一個相同的${typeName}（預設隱藏），方便沿用介紹資訊，再去編輯時段/名額即可。`)) return;
 
   // 複製全部欄位，去掉文件 id 與結案狀態，改成隱藏、排在最後
   const { id, ...rest } = c;
@@ -760,13 +761,13 @@ async function duplicateCourse(courseId) {
   data.name   = c.name + '（複製）';
   if (!data.nameEn || data.nameEn === c.name) data.nameEn = data.name;
   data.active = false;                 // 預設隱藏，不會出現在前台
-  data.order  = adminCourses.length;   // 排在課程列表最後
+  data.order  = regCourses.length;     // 排在課程列表最後
 
   try {
     await db.collection('courses').add(data);
     await loadCourseCaps();
-    loadCourseList();
-    alert(`已複製成「${data.name}」（預設隱藏）。請編輯後再按「顯示」開放報名。`);
+    if (typeof loadCourseList === 'function') loadCourseList();
+    alert(`已複製成「${data.name}」，放在「課程管理」（預設隱藏）。請編輯後按「顯示」開放報名。`);
   } catch (e) {
     alert('複製失敗：' + e.message);
   }
@@ -882,7 +883,10 @@ function renderArchives() {
           <div class="archive-name">${c.emoji || ''} ${c.name} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''}</div>
           <div class="archive-meta">結案時間：${closed}　｜　報名 ${regs.length} 筆　｜　Leader ${leader}　Follower ${follower}</div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="exportArchive('${c.id}')">匯出 Excel</button>
+        <div class="archive-actions">
+          <button class="btn btn-secondary btn-sm" onclick="duplicateCourse('${c.id}')">${c.type === 'event' ? '複製新活動' : '複製新課程'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportArchive('${c.id}')">匯出 Excel</button>
+        </div>
       </div>
       ${detail}
       <div class="archive-subhead">報名明細</div>
