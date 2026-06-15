@@ -253,7 +253,6 @@ function renderCapacitySummary() {
   const wrap = document.getElementById('capacity-summary');
   if (!wrap) return;
   const cards = Object.values(admissionStats)
-    .filter(s => s.capL != null || s.capF != null)
     .map(s => {
       const line = (label, admit, cap, wait) => {
         if (cap == null) return `<div class="cap-line">${label}：${admit} 人（不限）</div>`;
