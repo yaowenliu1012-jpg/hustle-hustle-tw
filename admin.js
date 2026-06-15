@@ -293,8 +293,8 @@ function renderTable(rows, roleF = '') {
       <td>NT$${Number(r.total).toLocaleString()}</td>
       <td>${r.transferCode}</td>
       <td>${r.referral || '—'}</td>
-      <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
       <td>${admitBadge(r._admit)}</td>
+      <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
       <td>${r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}</td>
       <td>
         <button class="btn btn-secondary btn-sm" onclick="openModal('${r.id}')">查看</button>
