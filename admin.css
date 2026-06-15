@@ -249,6 +249,28 @@ tr:hover td { background: var(--surface); }
 .trash-panel { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px dashed var(--border); }
 .trash-heading { font-size: 1.1rem; margin: 0 0 .4rem; }
 
+/* 結案按鈕（課程管理卡片內） */
+.btn-archive { background: #1f3a5f; color: #cfe3ff; }
+
+/* 結案資料頁 */
+.archive-list { display: flex; flex-direction: column; gap: 1.25rem; }
+.archive-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem 1.25rem;
+}
+.archive-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: .75rem;
+}
+.archive-name { font-size: 1.1rem; font-weight: 700; }
+.archive-meta { font-size: .82rem; color: var(--muted, #999); margin-top: .25rem; }
+.archive-table { font-size: .85rem; }
+
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn {
   padding: .55rem 1.1rem;

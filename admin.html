@@ -32,6 +32,7 @@
       <nav>
         <a class="nav-item active" data-tab="registrations" onclick="switchTab('registrations')">📋 報名管理</a>
         <a class="nav-item" data-tab="courses" onclick="switchTab('courses')">💃 課程管理</a>
+        <a class="nav-item" data-tab="archive" onclick="switchTab('archive')">📦 結案資料</a>
         <a class="nav-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 設定</a>
       </nav>
       <button class="btn btn-logout" onclick="doLogout()">登出</button>
@@ -141,6 +142,18 @@
         </div>
         <p class="settings-note">這裡的課程會即時顯示在報名頁。第一次使用時是空的，前台會先顯示 config.js 的預設課程；新增第一筆後就以這裡為準。</p>
         <div id="course-list" class="course-admin-list"></div>
+      </section>
+
+      <!-- ── 結案資料 ── -->
+      <section id="tab-archive" class="tab-section" style="display:none">
+        <div class="section-header">
+          <h1>結案資料</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
+          </div>
+        </div>
+        <p class="settings-note">每個結案的課程會歸檔成一份資料，含課程資訊與當時所有報名。在「課程管理」點課程的「結案」即可建立。</p>
+        <div id="archive-list" class="archive-list"></div>
       </section>
 
       <!-- ── 設定 ── -->

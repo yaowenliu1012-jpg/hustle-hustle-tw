@@ -152,9 +152,9 @@ function computeAdmission() {
   // 先清空，沒被計入（已拒絕/已刪除）的列招生欄會顯示「—」
   allRegistrations.forEach(r => { r._admit = ''; r._admitAuto = ''; });
 
-  // 已拒絕 / 已刪除不佔名額（被拒絕者表格內招生欄會顯示「—」）
+  // 已拒絕 / 已刪除 / 已結案不佔名額（被拒絕者表格內招生欄會顯示「—」）
   const ordered = allRegistrations
-    .filter(r => !r.deleted && r.status !== 'rejected')
+    .filter(r => !r.deleted && !r.archived && r.status !== 'rejected')
     .sort((a, b) => (a.seq || 0) - (b.seq || 0));
 
   for (const r of ordered) {
@@ -223,7 +223,7 @@ function applyFilters() {
   const admitF  = document.getElementById('filter-admit').value;
 
   const filtered = allRegistrations.filter(r => {
-    if (r.deleted) return false;
+    if (r.deleted || r.archived) return false;
     if (statusF && r.status !== statusF) return false;
     if (courseF && courseNameOf(r) !== courseF) return false;
     if (admitF && r._admit !== admitF) return false;
@@ -323,7 +323,7 @@ function statusLabel(s) {
 }
 
 function renderStats() {
-  const active   = allRegistrations.filter(r => !r.deleted);
+  const active   = allRegistrations.filter(r => !r.deleted && !r.archived);
   const total    = active.length;
   const pending  = active.filter(r => r.status === 'pending').length;
   const approved = active.filter(r => r.status === 'approved').length;
@@ -341,7 +341,7 @@ function populateCourseFilter() {
   const current = sel.value;
 
   // 從實際報名資料抓出所有課程/活動名稱（包含已刪除的課程，舊資料仍可篩選）
-  const names = [...new Set(allRegistrations.map(r => courseNameOf(r)).filter(Boolean))];
+  const names = [...new Set(allRegistrations.filter(r => !r.deleted && !r.archived).map(r => courseNameOf(r)).filter(Boolean))];
 
   sel.innerHTML = '<option value="">全部課程／活動</option>' +
     names.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
@@ -627,7 +627,8 @@ async function sendStatusEmail(toEmail, name, courseName, status) {
 }
 
 // ── 匯出 Excel（CSV） ────────────────────────────────────────
-function exportExcel() {
+// 把一批報名資料轉成 CSV 字串（共用：報名管理匯出、結案歸檔匯出）
+function registrationsToCsv(regs) {
   const headers = ['編號','報名時間','課程','方案','角色','姓名','電話','Email','金額','後五碼','推薦人','狀態','招生','審核時間'];
   // 一般欄位用引號包；電話、後五碼用 ="..." 強制 Excel 當文字，避免 0 開頭消失或變科學記號
   const q    = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
@@ -635,7 +636,7 @@ function exportExcel() {
   const makeRow = (seq, time, course, plan, role, name, phone, email, total, code, ref, status, admit, reviewed) =>
     [q(seq), q(time), q(course), q(plan), q(role), q(name), qTxt(phone), q(email), q(total), qTxt(code), q(ref), q(status), q(admit), q(reviewed)].join(',');
 
-  const rows = allRegistrations.filter(r => !r.deleted).flatMap(r => {
+  const rows = regs.flatMap(r => {
     const time = new Date(r.createdAt).toLocaleString('zh-TW');
     const reviewed = r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW') : '';
     const status = statusLabel(r.status);
@@ -654,14 +655,22 @@ function exportExcel() {
   });
 
   const bom = '﻿';
-  const csv = bom + [headers.join(','), ...rows].join('\r\n');
+  return bom + [headers.join(','), ...rows].join('\r\n');
+}
+
+function downloadCsv(csv, filename) {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = `報名資料_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function exportExcel() {
+  const regs = allRegistrations.filter(r => !r.deleted && !r.archived);
+  downloadCsv(registrationsToCsv(regs), `報名資料_${new Date().toISOString().slice(0,10)}.csv`);
 }
 
 // ── 分頁切換 ──────────────────────────────────────────────────
@@ -673,6 +682,7 @@ function switchTab(tab) {
 
   if (tab === 'settings') loadSettingsForm();
   if (tab === 'courses') loadCourseList();
+  if (tab === 'archive') renderArchives();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -690,7 +700,8 @@ async function loadCourseList() {
 
   try {
     const snap = await db.collection('courses').orderBy('order').get();
-    adminCourses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // 已結案的課程移到「結案資料」，不在課程管理顯示
+    adminCourses = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(c => !c.archived);
   } catch (e) {
     wrap.innerHTML = `<p class="settings-note">載入失敗：${e.message}</p>`;
     return;
@@ -716,6 +727,7 @@ async function loadCourseList() {
         <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, 1)" ${i === adminCourses.length - 1 ? 'disabled' : ''}>↓</button>
         <button class="btn btn-primary btn-sm" onclick="openCourseForm('${c.id}')">編輯</button>
         <button class="btn btn-secondary btn-sm" onclick="toggleCourseActive('${c.id}')">${hidden ? '顯示' : '隱藏'}</button>
+        <button class="btn btn-archive btn-sm" onclick="archiveCourse('${c.id}')">結案</button>
       </div>
     </div>`;
   }).join('');
@@ -730,6 +742,114 @@ async function toggleCourseActive(courseId) {
   } catch (e) {
     alert('切換失敗：' + e.message);
   }
+}
+
+// 判斷一筆報名是否屬於某課程（courseId 優先，無 id 的舊資料用課名）
+function regBelongsToCourse(r, course) {
+  return r.courseId === course.id || (!r.courseId && r.courseName === course.name);
+}
+
+// ── 結案：課程＋其報名一起歸檔到「結案資料」 ─────────────────
+async function archiveCourse(courseId) {
+  const c = adminCourses.find(x => x.id === courseId);
+  if (!c) return;
+
+  const regs = allRegistrations.filter(r => !r.deleted && !r.archived && regBelongsToCourse(r, c));
+  if (!confirm(`確定要將「${c.name}」結案嗎？\n\n• 課程會停止前台報名，並從「課程管理」移除\n• ${regs.length} 筆報名資料一併歸檔到「📦 結案資料」\n• 結案後不提供還原`)) return;
+
+  const closedAt = new Date().toISOString();
+  if (db) {
+    try {
+      const batch = db.batch();
+      batch.update(db.collection('courses').doc(courseId), { archived: true, active: false, closedAt });
+      regs.filter(r => !String(r.id).startsWith('demo'))
+          .forEach(r => batch.update(db.collection('registrations').doc(r.id), { archived: true, closedAt }));
+      await batch.commit();
+    } catch (e) { alert('結案失敗：' + e.message); return; }
+  }
+
+  // 更新記憶體
+  c.archived = true; c.active = false; c.closedAt = closedAt;
+  regs.forEach(r => { r.archived = true; r.closedAt = closedAt; });
+  await loadCourseCaps();   // 讓報名管理的課名解析、結案頁同步
+  loadCourseList();
+  applyFilters();
+  alert(`「${c.name}」已結案，歸檔 ${regs.length} 筆報名。可在側欄「📦 結案資料」查看。`);
+}
+
+// ── 結案資料頁 ───────────────────────────────────────────────
+function renderArchives() {
+  const wrap = document.getElementById('archive-list');
+  if (!wrap) return;
+
+  const courses = regCourses.filter(c => c.archived)
+    .sort((a, b) => new Date(b.closedAt || 0) - new Date(a.closedAt || 0));
+
+  if (!courses.length) {
+    wrap.innerHTML = '<p class="settings-note">還沒有結案的課程。在「課程管理」點課程的「結案」即可歸檔成一份資料。</p>';
+    return;
+  }
+
+  wrap.innerHTML = courses.map(c => {
+    const regs = allRegistrations.filter(r => r.archived && !r.deleted && regBelongsToCourse(r, c))
+      .sort((a, b) => (a.seq || 0) - (b.seq || 0));
+
+    let leader = 0, follower = 0;
+    regs.forEach(r => {
+      if (r.leaderName) { leader++; follower++; }
+      else if (r.role === 'Leader') leader++;
+      else if (r.role === 'Follower') follower++;
+    });
+
+    const closed = c.closedAt ? new Date(c.closedAt).toLocaleString('zh-TW') : '—';
+    const body = regs.length ? regs.map(r => {
+      const isDuo = !!r.leaderName;
+      const name  = isDuo ? `${r.leaderName} / ${r.followerName}` : (r.name || '');
+      const phone = isDuo ? `${r.leaderPhone} / ${r.followerPhone}` : (r.phone || '');
+      const email = isDuo ? (r.payerEmail || '') : (r.email || '');
+      const role  = isDuo ? 'Leader / Follower' : (r.role || '—');
+      const time  = new Date(r.createdAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+      return `<tr>
+        <td>${r.seq || ''}</td>
+        <td>${time}</td>
+        <td>${planNameOf(r)}</td>
+        <td>${role}</td>
+        <td>${name}</td>
+        <td>${phone}</td>
+        <td>${email}</td>
+        <td>NT$${Number(r.total).toLocaleString()}</td>
+        <td>${r.transferCode || ''}</td>
+        <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="10" class="loading-cell">這份歸檔沒有報名資料</td></tr>';
+
+    return `<div class="archive-card">
+      <div class="archive-head">
+        <div>
+          <div class="archive-name">${c.emoji || ''} ${c.name} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''}</div>
+          <div class="archive-meta">結案時間：${closed}　｜　報名 ${regs.length} 筆　｜　Leader ${leader}　Follower ${follower}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="exportArchive('${c.id}')">匯出 Excel</button>
+      </div>
+      <div class="table-wrap">
+        <table class="archive-table">
+          <thead><tr>
+            <th>#</th><th>時間</th><th>方案</th><th>角色</th><th>姓名</th>
+            <th>電話</th><th>Email</th><th>金額</th><th>後五碼</th><th>狀態</th>
+          </tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportArchive(courseId) {
+  const c = regCourses.find(x => x.id === courseId);
+  if (!c) return;
+  const regs = allRegistrations.filter(r => r.archived && !r.deleted && regBelongsToCourse(r, c))
+    .sort((a, b) => (a.seq || 0) - (b.seq || 0));
+  downloadCsv(registrationsToCsv(regs), `結案_${c.name}_${new Date().toISOString().slice(0,10)}.csv`);
 }
 
 async function moveCourse(index, dir) {
