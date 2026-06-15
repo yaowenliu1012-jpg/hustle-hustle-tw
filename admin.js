@@ -829,21 +829,24 @@ function renderArchives() {
     const sessions = (c.sessions || []).filter(Boolean).join('、');
     const plansTxt = (c.plans || []).map(p => `${p.label} NT$${Number(p.price).toLocaleString()}`).join('｜');
     const detail = `
-      <div class="archive-detail">
-        ${c.photo ? `<img src="${c.photo}" class="archive-photo">` : ''}
-        <table class="archive-detail-table">
-          ${field('類型', c.type === 'event' ? '活動' : '課程')}
-          ${field('英文名', (c.nameEn && c.nameEn !== c.name) ? c.nameEn : '')}
-          ${field('課程描述', c.description ? c.description.replace(/\n/g, '<br>') : '')}
-          ${field('時段', sessions)}
-          ${field('地點', c.location)}
-          ${field('師資', c.teacher)}
-          ${field('師資介紹', c.teacherDesc ? c.teacherDesc.replace(/\n/g, '<br>') : '')}
-          ${field('方案與價格', plansTxt)}
-          ${field('招生名額', `Leader ${cap(c.leaderCap)}　Follower ${cap(c.followerCap)}`)}
-          ${field('推薦人優惠', c.referralEnabled === false ? '關閉' : '開啟')}
-        </table>
-      </div>`;
+      <details class="archive-detail-wrap">
+        <summary>課程資訊</summary>
+        <div class="archive-detail">
+          ${c.photo ? `<img src="${c.photo}" class="archive-photo">` : ''}
+          <table class="archive-detail-table">
+            ${field('類型', c.type === 'event' ? '活動' : '課程')}
+            ${field('英文名', (c.nameEn && c.nameEn !== c.name) ? c.nameEn : '')}
+            ${field('課程描述', c.description ? c.description.replace(/\n/g, '<br>') : '')}
+            ${field('時段', sessions)}
+            ${field('地點', c.location)}
+            ${field('師資', c.teacher)}
+            ${field('師資介紹', c.teacherDesc ? c.teacherDesc.replace(/\n/g, '<br>') : '')}
+            ${field('方案與價格', plansTxt)}
+            ${field('招生名額', `Leader ${cap(c.leaderCap)}　Follower ${cap(c.followerCap)}`)}
+            ${field('推薦人優惠', c.referralEnabled === false ? '關閉' : '開啟')}
+          </table>
+        </div>
+      </details>`;
 
     return `<div class="archive-card">
       <div class="archive-head">

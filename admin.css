@@ -271,16 +271,32 @@ tr:hover td { background: var(--surface); }
 .archive-meta { font-size: .82rem; color: var(--muted, #999); margin-top: .25rem; }
 .archive-table { font-size: .85rem; }
 
-/* 結案卡：課程詳細資料 */
+/* 結案卡：課程詳細資料（可折疊） */
+.archive-detail-wrap { margin-bottom: 1rem; }
+.archive-detail-wrap > summary {
+  cursor: pointer;
+  user-select: none;
+  font-size: .9rem;
+  font-weight: 700;
+  padding: .5rem .75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  list-style: none;
+}
+.archive-detail-wrap > summary::-webkit-details-marker { display: none; }
+.archive-detail-wrap > summary::before { content: '▸ '; color: var(--muted, #999); }
+.archive-detail-wrap[open] > summary::before { content: '▾ '; }
+.archive-detail-wrap[open] > summary { border-radius: 8px 8px 0 0; }
 .archive-detail {
   display: flex;
   gap: 1rem;
   align-items: flex-start;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
   padding: .85rem 1rem;
-  margin-bottom: 1rem;
 }
 .archive-photo {
   width: 120px;
