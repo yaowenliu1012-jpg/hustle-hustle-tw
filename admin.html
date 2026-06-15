@@ -44,12 +44,7 @@
         <div class="section-header">
           <h1>報名管理</h1>
           <div class="header-actions">
-            <select id="filter-status" onchange="applyFilters()">
-              <option value="">全部狀態</option>
-              <option value="pending">待審核</option>
-              <option value="approved">已通過</option>
-              <option value="rejected">已拒絕</option>
-            </select>
+            <button class="btn btn-secondary" id="btn-sort" onclick="toggleSort()">↓ 新到舊</button>
             <select id="filter-course" onchange="applyFilters()">
               <option value="">全部課程</option>
             </select>
@@ -64,10 +59,15 @@
               <option value="wait">候補</option>
               <option value="hold">待定</option>
             </select>
-            <button class="btn btn-secondary" id="btn-sort" onclick="toggleSort()">↓ 新到舊</button>
+            <select id="filter-status" onchange="applyFilters()">
+              <option value="">全部狀態</option>
+              <option value="pending">待審核</option>
+              <option value="approved">已通過</option>
+              <option value="rejected">已拒絕</option>
+            </select>
+            <button class="btn btn-secondary" onclick="exportExcel()">匯出 Excel</button>
             <button class="btn btn-danger" id="btn-bulk-delete" onclick="bulkDelete()" style="display:none">🗑 刪除勾選</button>
             <button class="btn btn-secondary" id="btn-toggle-trash" onclick="toggleTrash()">🗑 刪除資料</button>
-            <button class="btn btn-secondary" onclick="exportExcel()">匯出 Excel</button>
             <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
           </div>
         </div>
