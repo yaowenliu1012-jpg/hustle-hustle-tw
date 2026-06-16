@@ -11,8 +11,11 @@ const SITE_CONFIG = {
     holder: '陳○○',
   },
 
-  // WhatsApp 通知號碼（CallMeBot，有新報名時通知管理員）
+  // WhatsApp 通知（CallMeBot，有新報名時通知管理員）
+  // whatsappNumber：要「收」通知的手機號碼，含國碼、不含 +（台灣 0922… → 886922…）
+  // callmebotApiKey：到 CallMeBot 申請後填入；留空或 placeholder 則不發送
   whatsappNumber: '886922800756',
+  callmebotApiKey: 'YOUR_CALLMEBOT_APIKEY',
 
   // 推薦人折扣
   referralDiscount: 100,

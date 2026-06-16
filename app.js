@@ -508,13 +508,18 @@ function showSuccess() {
 
 // ── WhatsApp 通知（CallMeBot） ────────────────────────────────
 function sendWhatsApp(payload) {
+  const phone  = SITE_CONFIG.whatsappNumber;
+  const apikey = SITE_CONFIG.callmebotApiKey;
+  // 未設定（留空或還是 placeholder）就不發送，避免打無效請求
+  if (!phone || !apikey || apikey === 'YOUR_CALLMEBOT_APIKEY') return;
+
   const msg = encodeURIComponent(
     `【新報名】${payload.courseName} ${payload.planName}\n` +
     `姓名：${payload.name || payload.leaderName + ' / ' + payload.followerName}\n` +
     `金額：NT$${payload.total}\n` +
     `後五碼：${payload.transferCode}`
   );
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${SITE_CONFIG.whatsappNumber}&text=${msg}&apikey=YOUR_CALLMEBOT_APIKEY`;
+  const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}&text=${msg}&apikey=${encodeURIComponent(apikey)}`;
   fetch(url).catch(() => {});
 }
 
