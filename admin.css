@@ -558,4 +558,25 @@ input[type="file"] { color: var(--muted); font-size: .85rem; }
   }
   .admin-main { padding: 1rem; }
   .section-header h1 { font-size: 1.15rem; }
+
+  /* 課程/活動卡：窄螢幕讓操作鈕換到下一行，不擠壓課名文字 */
+  .course-admin-card { flex-wrap: wrap; align-items: flex-start; }
+  .course-admin-actions {
+    flex-basis: 100%;
+    width: 100%;
+    flex-wrap: wrap;
+    margin-top: .6rem;
+  }
+  .course-admin-actions .btn { flex: 1 1 auto; }
+
+  /* 結案卡：標題與操作鈕直向排列、課程資訊與照片改直向 */
+  .archive-head { flex-direction: column; gap: .6rem; }
+  .archive-actions { width: 100%; }
+  .archive-actions .btn { flex: 1 1 auto; }
+  .archive-detail { flex-direction: column; }
+  .archive-photo { width: 100%; height: auto; max-height: 220px; }
+  .archive-detail-table td { white-space: normal; word-break: break-word; }
+
+  /* 彈窗按鈕列換行避免溢出 */
+  .modal-actions { flex-wrap: wrap; }
 }
