@@ -20,10 +20,62 @@ let COURSES = SITE_CONFIG.courses;
 // ── 初始化 ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   initFirebase();
+  initHero();
   await loadCourses();
   renderStep1();
   document.getElementById('lang-toggle').addEventListener('click', toggleLang);
 });
+
+// ── Hero 開場（輪播大字 + 散落色塊變色） ─────────────────────
+const HERO_PALETTES = [
+  ['#E8381F', '#F4B400', '#36506E', '#16130F', '#F2701A', '#E85D9E', '#2F9E6B', '#6C4BD8'],
+  ['#6C4BD8', '#36506E', '#E85D9E', '#F4B400', '#16130F', '#E8381F', '#F2701A', '#2F9E6B'],
+  ['#E85D9E', '#F4B400', '#E8381F', '#6C4BD8', '#F2701A', '#36506E', '#16130F', '#2F9E6B'],
+  ['#F2701A', '#2F9E6B', '#E8381F', '#F4B400', '#36506E', '#6C4BD8', '#E85D9E', '#16130F'],
+];
+let heroIndex = 0;
+let heroTimer = null;
+
+function initHero() {
+  updateHeroText();
+  paintHero(0);
+  ['nav-start', 'hero-start', 'hero-learn'].forEach(id =>
+    document.getElementById(id)?.addEventListener('click', goToFlow));
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = document.getElementById('hero');
+  if (!reduce && stage && !heroTimer) {
+    heroTimer = setInterval(() => {
+      heroIndex = (heroIndex + 1) % HERO_PALETTES.length;
+      stage.classList.add('swapping');
+      setTimeout(() => { paintHero(heroIndex); stage.classList.remove('swapping'); }, 340);
+    }, 2600);
+  }
+}
+
+// 填入目前語言的 Hero 文案（輪播字另由 paintHero 處理）
+function updateHeroText() {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('hero-eyebrow', t('heroEyebrow'));
+  set('hero-start', t('heroStart'));
+  set('hero-learn', t('heroLearn'));
+  set('hero-fine', t('heroFine'));
+  set('nav-start', t('heroStart'));
+  const lead = document.getElementById('hero-lead');
+  if (lead) lead.innerHTML = t('heroLead');   // 含 <b>，為固定翻譯字串、非使用者輸入
+}
+
+function paintHero(i) {
+  const words = I18N[lang].heroWords || ['Hustle'];
+  const wordEl = document.getElementById('word');
+  if (wordEl) wordEl.textContent = words[i % words.length];
+  const pal = HERO_PALETTES[i % HERO_PALETTES.length];
+  document.querySelectorAll('.tile').forEach((tile, k) => { tile.style.background = pal[k % pal.length]; });
+}
+
+function goToFlow() {
+  document.querySelector('.steps')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function initFirebase() {
   try {
@@ -50,6 +102,8 @@ async function loadCourses() {
 function toggleLang() {
   lang = lang === 'zh' ? 'en' : 'zh';
   document.getElementById('lang-toggle').textContent = t('langToggle');
+  updateHeroText();
+  paintHero(heroIndex);   // 輪播字也跟著換語言
   refreshCurrentStep();
 }
 
