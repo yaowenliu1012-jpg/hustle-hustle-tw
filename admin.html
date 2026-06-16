@@ -188,14 +188,6 @@
           <div class="setting-card">
             <h3>通知設定</h3>
             <div class="form-group">
-              <label>WhatsApp 號碼（CallMeBot，含國碼）</label>
-              <input id="s-whatsapp" type="text" placeholder="886922800756">
-            </div>
-            <div class="form-group">
-              <label>CallMeBot API Key</label>
-              <input id="s-callmebot-key" type="text" placeholder="YOUR_APIKEY">
-            </div>
-            <div class="form-group">
               <label>Resend API Key（Email 發送）</label>
               <input id="s-resend-key" type="password" placeholder="re_...">
             </div>
@@ -203,6 +195,7 @@
               <label>寄件人 Email</label>
               <input id="s-sender-email" type="email" placeholder="noreply@your-domain.com">
             </div>
+            <p class="settings-note">WhatsApp 新報名通知（CallMeBot）設定在 config.js 的 <code>whatsappNumber</code> 與 <code>callmebotApiKey</code>，需修改請改該檔。</p>
           </div>
 
           <div class="setting-card">

@@ -1125,7 +1125,7 @@ async function deleteCourse() {
 // ── 設定（localStorage） ──────────────────────────────────────
 function loadSettings() {
   // 從 localStorage 覆蓋 config
-  const keys = ['bank_name','bank_account','bank_raw','bank_holder','whatsapp','callmebot_key','resend_key','sender_email','discount'];
+  const keys = ['bank_name','bank_account','bank_raw','bank_holder','resend_key','sender_email','discount'];
   // 靜默載入，實際值在 saveSettings / loadSettingsForm 時使用
 }
 
@@ -1134,8 +1134,6 @@ function loadSettingsForm() {
   document.getElementById('s-bank-account').value = localStorage.getItem('hhtw_bank_account') || SITE_CONFIG.bank.account;
   document.getElementById('s-bank-raw').value     = localStorage.getItem('hhtw_bank_raw')     || SITE_CONFIG.bank.accountRaw;
   document.getElementById('s-bank-holder').value  = localStorage.getItem('hhtw_bank_holder')  || SITE_CONFIG.bank.holder;
-  document.getElementById('s-whatsapp').value     = localStorage.getItem('hhtw_whatsapp')     || SITE_CONFIG.whatsappNumber;
-  document.getElementById('s-callmebot-key').value= localStorage.getItem('hhtw_callmebot')    || '';
   document.getElementById('s-resend-key').value   = localStorage.getItem('hhtw_resend_key')   || '';
   document.getElementById('s-sender-email').value = localStorage.getItem('hhtw_sender_email') || SITE_CONFIG.senderEmail;
   document.getElementById('s-discount').value     = localStorage.getItem('hhtw_discount')     || SITE_CONFIG.referralDiscount;
@@ -1146,8 +1144,6 @@ function saveSettings() {
   localStorage.setItem('hhtw_bank_account', document.getElementById('s-bank-account').value);
   localStorage.setItem('hhtw_bank_raw',     document.getElementById('s-bank-raw').value);
   localStorage.setItem('hhtw_bank_holder',  document.getElementById('s-bank-holder').value);
-  localStorage.setItem('hhtw_whatsapp',     document.getElementById('s-whatsapp').value);
-  localStorage.setItem('hhtw_callmebot',    document.getElementById('s-callmebot-key').value);
   localStorage.setItem('hhtw_resend_key',   document.getElementById('s-resend-key').value);
   localStorage.setItem('hhtw_sender_email', document.getElementById('s-sender-email').value);
   localStorage.setItem('hhtw_discount',     document.getElementById('s-discount').value);
