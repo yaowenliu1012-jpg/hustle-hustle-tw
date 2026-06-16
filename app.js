@@ -113,13 +113,13 @@ function renderCourseGroup(list, heading) {
         const hasDetail = c.photo || c.description || c.teacher || c.location;
         return `
         <div class="course-card ${state.courseId === c.id ? 'selected' : ''}" data-id="${c.id}">
-          <div class="course-name">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>
+          <div class="course-name">${escHtml(lang === 'zh' ? c.name : (c.nameEn || c.name))}</div>
           <div class="course-sessions">
             <strong>${c.type === 'event' ? (lang === 'zh' ? '活動時間' : 'Event Times') : t('sessions')}：</strong>
-            ${((lang === 'zh' ? c.sessions : c.sessionsEn) || c.sessions || []).map(s => `<div>${s}</div>`).join('')}
+            ${((lang === 'zh' ? c.sessions : c.sessionsEn) || c.sessions || []).map(s => `<div>${escHtml(s)}</div>`).join('')}
           </div>
           <div class="course-prices">
-            ${c.plans.map(p => `<span class="price-tag">${lang === 'zh' ? p.label : p.labelEn} NT$${p.price.toLocaleString()}</span>`).join('')}
+            ${c.plans.map(p => `<span class="price-tag">${escHtml(lang === 'zh' ? p.label : p.labelEn)} NT$${p.price.toLocaleString()}</span>`).join('')}
           </div>
         </div>`;
       }).join('')}
@@ -157,13 +157,13 @@ function showCourseDetail(courseId) {
   overlay.innerHTML = `
     <div class="detail-modal">
       <button class="detail-close" aria-label="close">✕</button>
-      ${c.photo ? `<img class="detail-photo" src="${c.photo}" alt="">` : ''}
+      ${c.photo ? `<img class="detail-photo" src="${escHtml(c.photo)}" alt="">` : ''}
       <div class="detail-body">
-        <h3 class="detail-title">${lang === 'zh' ? c.name : (c.nameEn || c.name)}</h3>
-        ${c.description ? `<p class="detail-desc">${lang === 'zh' ? c.description : (c.descriptionEn || c.description)}</p>` : ''}
-        ${c.teacher ? `<p class="detail-meta">🧑‍🏫 <strong>${lang === 'zh' ? c.teacher : (c.teacherEn || c.teacher)}</strong></p>` : ''}
-        ${c.teacherDesc ? `<p class="detail-teacher">${lang === 'zh' ? c.teacherDesc : (c.teacherDescEn || c.teacherDesc)}</p>` : ''}
-        ${c.location ? `<p class="detail-meta">📍 ${lang === 'zh' ? c.location : (c.locationEn || c.location)}</p>` : ''}
+        <h3 class="detail-title">${escHtml(lang === 'zh' ? c.name : (c.nameEn || c.name))}</h3>
+        ${c.description ? `<p class="detail-desc">${escHtml(lang === 'zh' ? c.description : (c.descriptionEn || c.description))}</p>` : ''}
+        ${c.teacher ? `<p class="detail-meta">🧑‍🏫 <strong>${escHtml(lang === 'zh' ? c.teacher : (c.teacherEn || c.teacher))}</strong></p>` : ''}
+        ${c.teacherDesc ? `<p class="detail-teacher">${escHtml(lang === 'zh' ? c.teacherDesc : (c.teacherDescEn || c.teacherDesc))}</p>` : ''}
+        ${c.location ? `<p class="detail-meta">📍 ${escHtml(lang === 'zh' ? c.location : (c.locationEn || c.location))}</p>` : ''}
         <div class="detail-actions">
           <button class="btn btn-primary" id="detail-select">${lang === 'zh' ? '報名' : 'Register'}</button>
         </div>
@@ -203,7 +203,7 @@ function isAlumniPlan(p) {
 function courseBanner() {
   const c = COURSES.find(x => x.id === state.courseId);
   if (!c) return '';
-  return `<div class="course-banner">${c.emoji || ''} ${lang === 'zh' ? c.name : (c.nameEn || c.name)}</div>`;
+  return `<div class="course-banner">${escHtml(c.emoji || '')} ${escHtml(lang === 'zh' ? c.name : (c.nameEn || c.name))}</div>`;
 }
 
 // ── Step 2：選方案 ───────────────────────────────────────────
@@ -217,7 +217,7 @@ function renderStep2() {
     <div class="plan-grid">
       ${course.plans.map(p => `
         <div class="plan-card ${state.planId === p.id ? 'selected' : ''}" data-id="${p.id}">
-          <div class="plan-label">${lang === 'zh' ? p.label : p.labelEn}</div>
+          <div class="plan-label">${escHtml(lang === 'zh' ? p.label : p.labelEn)}</div>
           <div class="plan-price">NT$${p.price.toLocaleString()}</div>
         </div>
       `).join('')}
@@ -369,17 +369,17 @@ function renderStep4() {
     <div class="confirm-box">
       <h3>${t('confirmInfo')}</h3>
       <table class="confirm-table">
-        <tr><td>${t('course')}</td><td>${course.emoji} ${lang === 'zh' ? course.name : course.nameEn}</td></tr>
-        <tr><td>${t('plan')}</td><td>${lang === 'zh' ? plan.label : plan.labelEn}</td></tr>
+        <tr><td>${t('course')}</td><td>${escHtml(course.emoji)} ${escHtml(lang === 'zh' ? course.name : course.nameEn)}</td></tr>
+        <tr><td>${t('plan')}</td><td>${escHtml(lang === 'zh' ? plan.label : plan.labelEn)}</td></tr>
         ${isDuo ? `
-          <tr><td>Leader</td><td>${fd.leader_name} / ${fd.leader_phone}</td></tr>
-          <tr><td>Follower</td><td>${fd.follower_name} / ${fd.follower_phone}</td></tr>
+          <tr><td>Leader</td><td>${escHtml(fd.leader_name)} / ${escHtml(fd.leader_phone)}</td></tr>
+          <tr><td>Follower</td><td>${escHtml(fd.follower_name)} / ${escHtml(fd.follower_phone)}</td></tr>
         ` : `
-          <tr><td>${t('name')}</td><td>${fd.solo_name}</td></tr>
-          <tr><td>${t('phone')}</td><td>${fd.solo_phone}</td></tr>
-          <tr><td>${t('role')}</td><td>${fd.solo_role}</td></tr>
+          <tr><td>${t('name')}</td><td>${escHtml(fd.solo_name)}</td></tr>
+          <tr><td>${t('phone')}</td><td>${escHtml(fd.solo_phone)}</td></tr>
+          <tr><td>${t('role')}</td><td>${escHtml(fd.solo_role)}</td></tr>
         `}
-        ${hasRef ? `<tr><td>${t('discount')}</td><td>- NT$${discount} （${fd.referral}）</td></tr>` : ''}
+        ${hasRef ? `<tr><td>${t('discount')}</td><td>- NT$${discount} （${escHtml(fd.referral)}）</td></tr>` : ''}
         <tr class="total-row"><td>${t('totalAmount')}</td><td>NT$${total.toLocaleString()}</td></tr>
       </table>
     </div>
