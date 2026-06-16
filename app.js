@@ -513,10 +513,12 @@ function sendWhatsApp(payload) {
   // 未設定（留空或還是 placeholder）就不發送，避免打無效請求
   if (!phone || !apikey || apikey === 'YOUR_CALLMEBOT_APIKEY') return;
 
+  // 注意：CallMeBot 會把訊息裡的 $1~$9 當變數吃掉，所以 NT$ 後面要跟空格，
+  // 不能讓 $ 直接接數字（否則 NT$500 會變成 NT00）。
   const msg = encodeURIComponent(
     `【新報名】${payload.courseName} ${payload.planName}\n` +
     `姓名：${payload.name || payload.leaderName + ' / ' + payload.followerName}\n` +
-    `金額：NT$${payload.total}\n` +
+    `金額：NT$ ${Number(payload.total).toLocaleString()}\n` +
     `後五碼：${payload.transferCode}`
   );
   const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}&text=${msg}&apikey=${encodeURIComponent(apikey)}`;
