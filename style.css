@@ -110,6 +110,21 @@ body {
   padding: 10px 16px 44px;
   overflow: hidden;
 }
+/* 中央奶油聚光：讓色塊只在四周露出，中間文字保持乾淨好讀（介於色塊與文字之間） */
+.stage::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  left: 50%; top: 47%;
+  transform: translate(-50%, -50%);
+  width: min(760px, 94%);
+  height: min(460px, 66%);
+  background: radial-gradient(ellipse at center,
+    var(--bg) 40%,
+    rgba(247, 239, 223, .82) 58%,
+    rgba(247, 239, 223, 0) 78%);
+  pointer-events: none;
+}
 .eyebrow {
   font-family: 'Archivo', 'Noto Sans TC', sans-serif;
   font-weight: 700;
@@ -125,6 +140,8 @@ body {
   letter-spacing: -.04em;
   color: var(--ink);
   display: inline-block;
+  /* 淡奶油光暈，壓在任何色塊上都清楚 */
+  text-shadow: 0 0 26px var(--bg), 0 0 12px var(--bg);
   transition: opacity .34s ease, transform .34s ease;
   will-change: opacity, transform;
 }
