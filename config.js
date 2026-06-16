@@ -87,6 +87,5 @@ const SITE_CONFIG = {
   // 寄件人 Email（需在 Resend 驗證網域）
   senderEmail: 'noreply@hustle-hustle-tw.com',
 
-  // 後台管理密碼
-  adminPassword: 'hustle2025',
+  // 後台登入已改用 Firebase Authentication（Console → Authentication → Users 管理帳號）
 };

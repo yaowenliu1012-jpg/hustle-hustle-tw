@@ -6,38 +6,56 @@ let db = null;
 let allRegistrations = [];
 let currentDocId = null;
 
+// HTML 跳脫：所有「使用者可填」的資料（報名姓名/電話/Email/課程文字等）
+// 用 innerHTML 輸出前都要先過這個，避免儲存型 XSS（例如姓名塞 <img onerror=...>）。
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 // ── 初始化 ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
+  initFirebase();   // 提前初始化，讓 Firebase Auth 在登入畫面就可用
 
   // 防止滑鼠滾輪誤改數字欄位（如價格）的值
   document.addEventListener('wheel', () => {
     if (document.activeElement?.type === 'number') document.activeElement.blur();
   }, { passive: true });
 
-  // 密碼輸入框 Enter 鍵登入
-  document.getElementById('password-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
+  // Enter 鍵登入
+  ['email-input', 'password-input'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
   });
 });
 
-// ── 登入 ─────────────────────────────────────────────────────
-function doLogin() {
-  const pw = document.getElementById('password-input').value;
-  const savedPw = localStorage.getItem('hhtw_admin_pw') || SITE_CONFIG.adminPassword;
-  if (pw === savedPw) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('admin-screen').style.display = 'flex';
-    initFirebase();
-    loadRegistrations();
-  } else {
-    document.getElementById('login-err').textContent = '密碼錯誤';
+// ── 登入（Firebase Authentication） ──────────────────────────
+async function doLogin() {
+  const email = document.getElementById('email-input').value.trim();
+  const pw    = document.getElementById('password-input').value;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+
+  if (typeof firebase === 'undefined' || !firebase.auth) {
+    errEl.textContent = '系統連線失敗，請重新整理後再試';
+    return;
+  }
+  if (!email || !pw) { errEl.textContent = '請輸入帳號與密碼'; return; }
+
+  try {
+    // 登入成功後由 onAuthStateChanged 接手顯示後台
+    await firebase.auth().signInWithEmailAndPassword(email, pw);
+  } catch (e) {
+    errEl.textContent = '帳號或密碼錯誤';
   }
 }
 
 function doLogout() {
-  document.getElementById('admin-screen').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().signOut();   // onAuthStateChanged 會切回登入畫面
+  }
   document.getElementById('password-input').value = '';
 }
 
@@ -48,6 +66,18 @@ function initFirebase() {
       firebase.initializeApp(SITE_CONFIG.firebase);
     }
     db = firebase.firestore();
+
+    // 依登入狀態切換畫面：已登入→後台並載入資料；未登入→登入畫面
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-screen').style.display = 'flex';
+        loadRegistrations();
+      } else {
+        document.getElementById('admin-screen').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+      }
+    });
   } catch (e) {
     console.warn('Firebase 尚未設定');
     showDemoData();
@@ -1093,7 +1123,7 @@ async function deleteCourse() {
 // ── 設定（localStorage） ──────────────────────────────────────
 function loadSettings() {
   // 從 localStorage 覆蓋 config
-  const keys = ['bank_name','bank_account','bank_raw','bank_holder','whatsapp','callmebot_key','resend_key','sender_email','discount','admin_pw'];
+  const keys = ['bank_name','bank_account','bank_raw','bank_holder','whatsapp','callmebot_key','resend_key','sender_email','discount'];
   // 靜默載入，實際值在 saveSettings / loadSettingsForm 時使用
 }
 
@@ -1119,9 +1149,6 @@ function saveSettings() {
   localStorage.setItem('hhtw_resend_key',   document.getElementById('s-resend-key').value);
   localStorage.setItem('hhtw_sender_email', document.getElementById('s-sender-email').value);
   localStorage.setItem('hhtw_discount',     document.getElementById('s-discount').value);
-
-  const newPw = document.getElementById('s-admin-pw').value;
-  if (newPw) localStorage.setItem('hhtw_admin_pw', newPw);
 
   alert('設定已儲存！');
 }
