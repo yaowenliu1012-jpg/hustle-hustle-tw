@@ -290,7 +290,7 @@ function renderCapacitySummary() {
         return `<div class="cap-line ${full ? 'cap-full' : ''}">${label}：<b>${admit}/${cap}</b>${wait ? ` ・候補 ${wait}` : ''}</div>`;
       };
       return `<div class="cap-card">
-        <div class="cap-name">${s.name}</div>
+        <div class="cap-name">${esc(s.name)}</div>
         ${line('Leader', s.lAdmit, s.capL, s.lWait)}
         ${line('Follower', s.fAdmit, s.capF, s.fWait)}
         ${s.hold ? `<div class="cap-line cap-hold">待定 ${s.hold} 組（雙人卡名額，待人工判斷）</div>` : ''}
@@ -316,28 +316,28 @@ function renderTable(rows, roleF = '') {
     const fLine = (col) => `<div class="duo-line"><span class="duo-tag">F</span>${col}</div>`;
     const roleCol = isDuo
       ? `${showL ? '<div class="duo-line">Leader</div>' : ''}${showF ? '<div class="duo-line">Follower</div>' : ''}`
-      : (r.role || '—');
+      : esc(r.role || '—');
     const name  = isDuo
-      ? `${showL ? lLine(r.leaderName) : ''}${showF ? fLine(r.followerName) : ''}`
-      : r.name;
+      ? `${showL ? lLine(esc(r.leaderName)) : ''}${showF ? fLine(esc(r.followerName)) : ''}`
+      : esc(r.name);
     const phone = isDuo
-      ? `${showL ? lLine(r.leaderPhone) : ''}${showF ? fLine(r.followerPhone) : ''}`
-      : r.phone;
-    const email = isDuo ? r.payerEmail  : r.email;
+      ? `${showL ? lLine(esc(r.leaderPhone)) : ''}${showF ? fLine(esc(r.followerPhone)) : ''}`
+      : esc(r.phone);
+    const email = isDuo ? esc(r.payerEmail) : esc(r.email);
     const date  = new Date(r.createdAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
     return `<tr>
       <td><input type="checkbox" class="row-check" data-id="${r.id}" onchange="updateBulkBar()"></td>
       <td>${r.seq || ''}</td>
       <td>${date}</td>
-      <td>${courseNameOf(r)}</td>
-      <td>${planNameOf(r)}</td>
+      <td>${esc(courseNameOf(r))}</td>
+      <td>${esc(planNameOf(r))}</td>
       <td>${roleCol}</td>
       <td>${name}</td>
       <td>${phone}</td>
       <td>${email}</td>
       <td>NT$${Number(r.total).toLocaleString()}</td>
-      <td>${r.transferCode}</td>
-      <td>${r.referral || '—'}</td>
+      <td>${esc(r.transferCode)}</td>
+      <td>${r.referral ? esc(r.referral) : '—'}</td>
       <td>${admitBadge(r._admit)}</td>
       <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
       <td>${r.reviewedAt ? new Date(r.reviewedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}</td>
@@ -374,7 +374,7 @@ function populateCourseFilter() {
   const names = [...new Set(allRegistrations.filter(r => !r.deleted && !r.archived).map(r => courseNameOf(r)).filter(Boolean))];
 
   sel.innerHTML = '<option value="">全部課程／活動</option>' +
-    names.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
+    names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
 
   // 重新整理後保留原本選的篩選
   if (names.includes(current)) sel.value = current;
@@ -415,7 +415,7 @@ function openModal(docId) {
 
   document.getElementById('modal-body').innerHTML = `
     <table class="modal-table">
-      ${rows.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+      ${rows.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}
     </table>`;
 
   const isPending = r.status === 'pending';
@@ -578,16 +578,16 @@ function renderTrash() {
   }
   tbody.innerHTML = rows.map(r => {
     const isDuo = !!r.leaderName;
-    const name  = isDuo ? `${r.leaderName} / ${r.followerName}` : (r.name || '');
-    const phone = isDuo ? `${r.leaderPhone} / ${r.followerPhone}` : (r.phone || '');
+    const name  = isDuo ? esc(`${r.leaderName} / ${r.followerName}`) : esc(r.name || '');
+    const phone = isDuo ? esc(`${r.leaderPhone} / ${r.followerPhone}`) : esc(r.phone || '');
     const del   = r.deletedAt
       ? new Date(r.deletedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })
       : '—';
     return `<tr>
       <td>${r.seq || ''}</td>
       <td>${del}</td>
-      <td>${courseNameOf(r)}</td>
-      <td>${planNameOf(r)}</td>
+      <td>${esc(courseNameOf(r))}</td>
+      <td>${esc(planNameOf(r))}</td>
       <td>${name}</td>
       <td>${phone}</td>
       <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
@@ -746,11 +746,11 @@ async function loadCourseList() {
     const hidden = c.active === false;
     return `
     <div class="course-admin-card ${hidden ? 'course-hidden' : ''}">
-      ${c.photo ? `<img src="${c.photo}" class="course-admin-photo">` : `<div class="course-admin-photo course-admin-emoji">${c.emoji || '💃'}</div>`}
+      ${c.photo ? `<img src="${esc(c.photo)}" class="course-admin-photo">` : `<div class="course-admin-photo course-admin-emoji">${esc(c.emoji || '💃')}</div>`}
       <div class="course-admin-info">
-        <div class="course-admin-name">${c.emoji || ''} ${c.name} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''} ${hidden ? '<span class="hidden-tag">已隱藏</span>' : ''}</div>
-        <div class="course-admin-desc">${c.description || '（無描述）'}</div>
-        <div class="course-admin-plans">${c.teacher ? `🧑‍🏫 ${c.teacher}　` : ''}${(c.plans || []).map(p => `${p.label} NT$${p.price}`).join('｜')}</div>
+        <div class="course-admin-name">${esc(c.emoji || '')} ${esc(c.name)} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''} ${hidden ? '<span class="hidden-tag">已隱藏</span>' : ''}</div>
+        <div class="course-admin-desc">${c.description ? esc(c.description) : '（無描述）'}</div>
+        <div class="course-admin-plans">${c.teacher ? `🧑‍🏫 ${esc(c.teacher)}　` : ''}${(c.plans || []).map(p => `${esc(p.label)} NT$${esc(p.price)}`).join('｜')}</div>
       </div>
       <div class="course-admin-actions">
         <button class="btn btn-secondary btn-sm" onclick="moveCourse(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
@@ -863,43 +863,45 @@ function renderArchives() {
     const closed = c.closedAt ? new Date(c.closedAt).toLocaleString('zh-TW') : '—';
     const body = regs.length ? regs.map(r => {
       const isDuo = !!r.leaderName;
-      const name  = isDuo ? `${r.leaderName} / ${r.followerName}` : (r.name || '');
-      const phone = isDuo ? `${r.leaderPhone} / ${r.followerPhone}` : (r.phone || '');
-      const email = isDuo ? (r.payerEmail || '') : (r.email || '');
-      const role  = isDuo ? 'Leader / Follower' : (r.role || '—');
+      const name  = isDuo ? esc(`${r.leaderName} / ${r.followerName}`) : esc(r.name || '');
+      const phone = isDuo ? esc(`${r.leaderPhone} / ${r.followerPhone}`) : esc(r.phone || '');
+      const email = isDuo ? esc(r.payerEmail || '') : esc(r.email || '');
+      const role  = isDuo ? 'Leader / Follower' : esc(r.role || '—');
       const time  = new Date(r.createdAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
       return `<tr>
         <td>${r.seq || ''}</td>
         <td>${time}</td>
-        <td>${planNameOf(r)}</td>
+        <td>${esc(planNameOf(r))}</td>
         <td>${role}</td>
         <td>${name}</td>
         <td>${phone}</td>
         <td>${email}</td>
         <td>NT$${Number(r.total).toLocaleString()}</td>
-        <td>${r.transferCode || ''}</td>
+        <td>${esc(r.transferCode || '')}</td>
         <td><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></td>
       </tr>`;
     }).join('') : '<tr><td colspan="10" class="loading-cell">這份歸檔沒有報名資料</td></tr>';
 
-    // 課程詳細資料（有填才列）
+    // 課程詳細資料（有填才列）；val 一律跳脫，多行欄位另外保留換行
     const cap = v => (v == null ? '不限' : v);
-    const field = (label, val) => val ? `<tr><td>${label}</td><td>${val}</td></tr>` : '';
+    const field     = (label, val)  => val  ? `<tr><td>${esc(label)}</td><td>${esc(val)}</td></tr>` : '';
+    const fieldHtml = (label, html) => html ? `<tr><td>${esc(label)}</td><td>${html}</td></tr>` : '';
+    const multiline = t => esc(t).replace(/\n/g, '<br>');
     const sessions = (c.sessions || []).filter(Boolean).join('、');
     const plansTxt = (c.plans || []).map(p => `${p.label} NT$${Number(p.price).toLocaleString()}`).join('｜');
     const detail = `
       <details class="archive-detail-wrap">
         <summary>課程資訊</summary>
         <div class="archive-detail">
-          ${c.photo ? `<img src="${c.photo}" class="archive-photo">` : ''}
+          ${c.photo ? `<img src="${esc(c.photo)}" class="archive-photo">` : ''}
           <table class="archive-detail-table">
             ${field('類型', c.type === 'event' ? '活動' : '課程')}
             ${field('英文名', (c.nameEn && c.nameEn !== c.name) ? c.nameEn : '')}
-            ${field('課程描述', c.description ? c.description.replace(/\n/g, '<br>') : '')}
+            ${fieldHtml('課程描述', c.description ? multiline(c.description) : '')}
             ${field('時段', sessions)}
             ${field('地點', c.location)}
             ${field('師資', c.teacher)}
-            ${field('師資介紹', c.teacherDesc ? c.teacherDesc.replace(/\n/g, '<br>') : '')}
+            ${fieldHtml('師資介紹', c.teacherDesc ? multiline(c.teacherDesc) : '')}
             ${field('方案與價格', plansTxt)}
             ${field('招生名額', `Leader ${cap(c.leaderCap)}　Follower ${cap(c.followerCap)}`)}
             ${field('推薦人優惠', c.referralEnabled === false ? '關閉' : '開啟')}
@@ -910,7 +912,7 @@ function renderArchives() {
     return `<div class="archive-card">
       <div class="archive-head">
         <div>
-          <div class="archive-name">${c.emoji || ''} ${c.name} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''}</div>
+          <div class="archive-name">${esc(c.emoji || '')} ${esc(c.name)} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''}</div>
           <div class="archive-meta">結案時間：${closed}　｜　報名 ${regs.length} 筆　｜　Leader ${leader}　Follower ${follower}</div>
         </div>
         <div class="archive-actions">
@@ -1014,9 +1016,9 @@ function addPlanRow(plan = { label: '', labelEn: '', price: '' }) {
   // labelEn 跟中文相同時視為未填英文，顯示空白
   const labelEn = (plan.labelEn && plan.labelEn !== plan.label) ? plan.labelEn : '';
   row.innerHTML = `
-    <input type="text" class="plan-label-input" placeholder="方案名（如：單人）" value="${plan.label || ''}">
-    <input type="text" class="plan-label-en-input" placeholder="English (e.g. Solo)" value="${labelEn}">
-    <input type="number" class="plan-price-input" placeholder="價格" min="0" value="${plan.price ?? ''}">
+    <input type="text" class="plan-label-input" placeholder="方案名（如：單人）" value="${esc(plan.label || '')}">
+    <input type="text" class="plan-label-en-input" placeholder="English (e.g. Solo)" value="${esc(labelEn)}">
+    <input type="number" class="plan-price-input" placeholder="價格" min="0" value="${esc(plan.price ?? '')}">
     <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>`;
   document.getElementById('c-plans').appendChild(row);
 }
