@@ -36,6 +36,7 @@
       <nav>
         <a class="nav-item active" data-tab="registrations" onclick="switchTab('registrations')">📋 報名管理</a>
         <a class="nav-item" data-tab="courses" onclick="switchTab('courses')">💃 課程與活動管理</a>
+        <a class="nav-item" data-tab="home" onclick="switchTab('home')">🏠 首頁管理</a>
         <a class="nav-item" data-tab="archive" onclick="switchTab('archive')">📦 結案資料</a>
         <a class="nav-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 設定</a>
       </nav>
@@ -212,14 +213,54 @@
           <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
         </div>
         <p class="settings-note">⚠️ 設定儲存在瀏覽器本機，若清除快取或換電腦需重新設定。如需永久儲存請串接 Firebase Remote Config。</p>
+      </section>
 
-        <div class="section-header" style="margin-top:2.5rem"><h1>首頁 Hero 照片</h1></div>
+      <!-- ── 首頁管理 ── -->
+      <section id="tab-home" class="tab-section" style="display:none">
+        <div class="section-header">
+          <h1>首頁管理</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="saveHome()">儲存首頁</button>
+          </div>
+        </div>
+        <p class="settings-note">編輯首頁開場（Hero）的文字與照片。改完按「儲存首頁」，前台重新整理即可看到。文字可中英分別填寫；說明文字用 <code>*文字*</code> 可標成紅色重點。</p>
+
+        <h3 class="home-subhead">文字內容</h3>
+        <div class="bilingual-header"><span>中文</span><span>English（切換 EN 時顯示）</span></div>
+
+        <div class="form-2col">
+          <div class="form-group"><label>小標（大字上方）</label><input id="h-eyebrow-zh" type="text"></div>
+          <div class="form-group"><label>Eyebrow</label><input id="h-eyebrow-en" type="text"></div>
+        </div>
+        <div class="form-2col">
+          <div class="form-group"><label>輪播大字（一行一個，會循環播放）</label><textarea id="h-words-zh" rows="4"></textarea></div>
+          <div class="form-group"><label>Rotating words (one per line)</label><textarea id="h-words-en" rows="4"></textarea></div>
+        </div>
+        <div class="form-2col">
+          <div class="form-group"><label>說明文字（*文字* = 紅色重點）</label><textarea id="h-lead-zh" rows="3"></textarea></div>
+          <div class="form-group"><label>Lead text (*text* = red highlight)</label><textarea id="h-lead-en" rows="3"></textarea></div>
+        </div>
+        <div class="form-2col">
+          <div class="form-group"><label>主按鈕文字</label><input id="h-start-zh" type="text"></div>
+          <div class="form-group"><label>Primary button</label><input id="h-start-en" type="text"></div>
+        </div>
+        <div class="form-2col">
+          <div class="form-group"><label>次按鈕文字</label><input id="h-learn-zh" type="text"></div>
+          <div class="form-group"><label>Secondary button</label><input id="h-learn-en" type="text"></div>
+        </div>
+        <div class="form-2col">
+          <div class="form-group"><label>底部小字</label><input id="h-fine-zh" type="text"></div>
+          <div class="form-group"><label>Fine print</label><input id="h-fine-en" type="text"></div>
+        </div>
+
+        <h3 class="home-subhead" style="margin-top:1.5rem">Hero 照片</h3>
         <p class="settings-note">顯示在首頁開場的散落方塊（最多 8 張，空的位置會顯示變色色塊）。<strong>建議尺寸：正方形約 800×800 px（最少 400×400 px）</strong>，系統會自動壓縮到寬 400px。手機只會顯示第 1、4、5、8 張。</p>
         <div id="hero-photo-grid" class="hero-photo-grid"></div>
+
+        <span class="error-msg" id="home-err"></span>
         <div class="btn-row">
-          <button class="btn btn-primary" onclick="saveHeroPhotos()">儲存首頁照片</button>
+          <button class="btn btn-primary" onclick="saveHome()">儲存首頁</button>
         </div>
-        <span class="error-msg" id="hero-photo-err"></span>
       </section>
 
     </main>
@@ -377,6 +418,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <script src="config.js"></script>
+  <script src="i18n.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

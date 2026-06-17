@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFirebase();
   initHero();
   await loadCourses();
-  await loadHeroPhotos();
+  await loadHeroConfig();
   renderStep1();
   document.getElementById('lang-toggle').addEventListener('click', toggleLang);
 });
@@ -54,20 +54,38 @@ function initHero() {
   }
 }
 
+// 後台「首頁管理」覆寫的文案（site/hero.text）；空白則回退 i18n 預設
+let heroOverride = { zh: {}, en: {} };
+function heroText(key) {
+  const o = heroOverride[lang] || {};
+  if (o[key] != null && o[key] !== '') return o[key];
+  const map = { eyebrow: 'heroEyebrow', lead: 'heroLead', start: 'heroStart', learn: 'heroLearn', fine: 'heroFine' };
+  return t(map[key]);
+}
+function heroWordList() {
+  const o = heroOverride[lang] || {};
+  if (Array.isArray(o.words) && o.words.length) return o.words;
+  return I18N[lang].heroWords || ['Hustle'];
+}
+// *文字* → 紅色重點；換行 → <br>。先跳脫避免 XSS
+function formatLead(s) {
+  return escHtml(s).replace(/\*([^*]+)\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+}
+
 // 填入目前語言的 Hero 文案（輪播字另由 paintHero 處理）
 function updateHeroText() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  set('hero-eyebrow', t('heroEyebrow'));
-  set('hero-start', t('heroStart'));
-  set('hero-learn', t('heroLearn'));
-  set('hero-fine', t('heroFine'));
-  set('nav-start', t('heroStart'));
+  set('hero-eyebrow', heroText('eyebrow'));
+  set('hero-start', heroText('start'));
+  set('hero-learn', heroText('learn'));
+  set('hero-fine', heroText('fine'));
+  set('nav-start', heroText('start'));
   const lead = document.getElementById('hero-lead');
-  if (lead) lead.innerHTML = t('heroLead');   // 含 <b>，為固定翻譯字串、非使用者輸入
+  if (lead) lead.innerHTML = formatLead(heroText('lead'));
 }
 
 function paintHero(i) {
-  const words = I18N[lang].heroWords || ['Hustle'];
+  const words = heroWordList();
   const wordEl = document.getElementById('word');
   if (wordEl) wordEl.textContent = words[i % words.length];
   const pal = HERO_PALETTES[i % HERO_PALETTES.length];
@@ -77,15 +95,21 @@ function paintHero(i) {
   });
 }
 
-// ── 首頁 Hero 照片（Firestore: site/hero） ───────────────────
+// ── 首頁 Hero 設定（Firestore: site/hero — 照片 + 文案覆寫） ──
 let heroPhotos = [];
-async function loadHeroPhotos() {
+async function loadHeroConfig() {
   if (!db) return;
   try {
     const doc = await db.collection('site').doc('hero').get();
-    if (doc.exists) heroPhotos = doc.data().photos || [];
-  } catch (e) { /* 沒有就維持色塊 */ }
+    if (doc.exists) {
+      const data = doc.data();
+      heroPhotos = data.photos || [];
+      if (data.text) heroOverride = { zh: data.text.zh || {}, en: data.text.en || {} };
+    }
+  } catch (e) { /* 沒有就維持色塊與預設文案 */ }
   applyHeroPhotos();
+  updateHeroText();
+  paintHero(heroIndex);   // 套用覆寫的輪播字
 }
 
 function applyHeroPhotos() {

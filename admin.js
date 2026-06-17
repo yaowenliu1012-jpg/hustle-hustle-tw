@@ -710,8 +710,9 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).style.display = '';
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 
-  if (tab === 'settings') { loadSettingsForm(); loadHeroPhotos(); }
+  if (tab === 'settings') loadSettingsForm();
   if (tab === 'courses') loadCourseList();
+  if (tab === 'home') loadHome();
   if (tab === 'archive') renderArchives();
 }
 
@@ -1151,19 +1152,66 @@ function saveSettings() {
   alert('設定已儲存！');
 }
 
-// ── 首頁 Hero 照片（Firestore: site/hero） ───────────────────
+// ── 首頁管理（Firestore: site/hero — 文字 + 照片） ───────────
 let heroPhotos = [];        // 最多 8 張 base64，'' = 空（前台顯示變色色塊）
 const HERO_SLOTS = 8;
+const HERO_FIELDS = ['eyebrow', 'lead', 'start', 'learn', 'fine'];   // 一般文字欄位（words 另外處理）
 
-async function loadHeroPhotos() {
+async function loadHome() {
   heroPhotos = [];
+  let text = {};
   if (db) {
     try {
       const doc = await db.collection('site').doc('hero').get();
-      if (doc.exists) heroPhotos = (doc.data().photos || []).slice(0, HERO_SLOTS);
-    } catch (e) { /* 載入失敗就當作沒有照片 */ }
+      if (doc.exists) {
+        const data = doc.data();
+        heroPhotos = (data.photos || []).slice(0, HERO_SLOTS);
+        text = data.text || {};
+      }
+    } catch (e) { /* 載入失敗就用預設 */ }
   }
+  // 文字欄位：有覆寫用覆寫，否則回退 i18n 預設，讓欄位不會空白
+  ['zh', 'en'].forEach(lng => {
+    const o = text[lng] || {};
+    const I = (typeof I18N !== 'undefined' && I18N[lng]) || {};
+    HERO_FIELDS.forEach(f => {
+      const el = document.getElementById(`h-${f}-${lng}`);
+      if (el) el.value = (o[f] != null && o[f] !== '') ? o[f] : (I['hero' + cap(f)] || '');
+    });
+    const wEl = document.getElementById(`h-words-${lng}`);
+    if (wEl) {
+      const words = (Array.isArray(o.words) && o.words.length) ? o.words : (I.heroWords || []);
+      wEl.value = words.join('\n');
+    }
+  });
   renderHeroPhotoSlots();
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+async function saveHome() {
+  const err = document.getElementById('home-err');
+  err.textContent = '';
+  if (!db) { err.textContent = 'Firebase 未連線'; return; }
+
+  const text = {};
+  ['zh', 'en'].forEach(lng => {
+    const o = {};
+    HERO_FIELDS.forEach(f => { o[f] = (document.getElementById(`h-${f}-${lng}`).value || '').trim(); });
+    o.words = (document.getElementById(`h-words-${lng}`).value || '')
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    text[lng] = o;
+  });
+
+  const photos = [];
+  for (let i = 0; i < HERO_SLOTS; i++) photos[i] = heroPhotos[i] || '';
+
+  try {
+    await db.collection('site').doc('hero').set({ photos, text });
+    alert('首頁已儲存！前台重新整理即可看到。');
+  } catch (e) {
+    err.textContent = '儲存失敗：' + e.message;
+  }
 }
 
 function renderHeroPhotoSlots() {
@@ -1205,18 +1253,4 @@ function uploadHeroPhoto(i, input) {
 function removeHeroPhoto(i) {
   heroPhotos[i] = '';
   renderHeroPhotoSlots();
-}
-
-async function saveHeroPhotos() {
-  const err = document.getElementById('hero-photo-err');
-  err.textContent = '';
-  if (!db) { err.textContent = 'Firebase 未連線'; return; }
-  const photos = [];
-  for (let i = 0; i < HERO_SLOTS; i++) photos[i] = heroPhotos[i] || '';
-  try {
-    await db.collection('site').doc('hero').set({ photos });
-    alert('首頁照片已儲存！前台重新整理即可看到。');
-  } catch (e) {
-    err.textContent = '儲存失敗：' + e.message;
-  }
 }
