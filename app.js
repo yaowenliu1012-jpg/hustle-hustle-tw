@@ -38,18 +38,20 @@ const HERO_PALETTES = [
 let heroIndex = 0;
 let heroTimer = null;
 
+let heroSets = [[], [], []];   // 3 組照片（後台上傳），每組對應 8 個方塊
+
 function initHero() {
   updateHeroText();
-  paintHero(0);
+  renderHeroFrame(0);
   document.getElementById('hero-start')?.addEventListener('click', goToFlow);
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const stage = document.getElementById('hero');
   if (!reduce && stage && !heroTimer) {
     heroTimer = setInterval(() => {
-      heroIndex = (heroIndex + 1) % HERO_PALETTES.length;
+      heroIndex++;   // 不取模，由 renderHeroFrame 內各自對組數/調色盤取模
       stage.classList.add('swapping');
-      setTimeout(() => { paintHero(heroIndex); stage.classList.remove('swapping'); }, 340);
+      setTimeout(() => { renderHeroFrame(heroIndex); stage.classList.remove('swapping'); }, 340);
     }, 2600);
   }
 }
@@ -72,7 +74,7 @@ function formatLead(s) {
   return escHtml(s).replace(/\*([^*]+)\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
 }
 
-// 填入目前語言的 Hero 文案（輪播字另由 paintHero 處理）
+// 填入目前語言的 Hero 文案（輪播字另由 renderHeroFrame 處理）
 function updateHeroText() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   set('hero-eyebrow', heroText('eyebrow'));
@@ -82,39 +84,18 @@ function updateHeroText() {
   if (lead) lead.innerHTML = formatLead(heroText('lead'));
 }
 
-function paintHero(i) {
+// 畫一個畫格：輪播大字 + 散落方塊。方塊有當前組的照片就顯示照片，否則顯示變色色塊
+function renderHeroFrame(i) {
   const words = heroWordList();
   const wordEl = document.getElementById('word');
   if (wordEl) wordEl.textContent = words[i % words.length];
+
+  const set = heroSets[i % heroSets.length] || [];
   const pal = HERO_PALETTES[i % HERO_PALETTES.length];
   document.querySelectorAll('.tile').forEach((tile, k) => {
-    if (heroPhotos[k]) return;            // 有上傳照片的方塊不變色
-    tile.style.background = pal[k % pal.length];
-  });
-}
-
-// ── 首頁 Hero 設定（Firestore: site/hero — 照片 + 文案覆寫） ──
-let heroPhotos = [];
-async function loadHeroConfig() {
-  if (!db) return;
-  try {
-    const doc = await db.collection('site').doc('hero').get();
-    if (doc.exists) {
-      const data = doc.data();
-      heroPhotos = data.photos || [];
-      if (data.text) heroOverride = { zh: data.text.zh || {}, en: data.text.en || {} };
-    }
-  } catch (e) { /* 沒有就維持色塊與預設文案 */ }
-  applyHeroPhotos();
-  updateHeroText();
-  paintHero(heroIndex);   // 套用覆寫的輪播字
-}
-
-function applyHeroPhotos() {
-  document.querySelectorAll('.tile').forEach((tile, k) => {
-    const p = heroPhotos[k];
+    const p = set[k];
     if (p) {
-      tile.style.background = '';        // 清掉色塊底色
+      tile.style.background = '';
       tile.style.backgroundImage = `url(${p})`;
       tile.style.backgroundSize = 'cover';
       tile.style.backgroundPosition = 'center';
@@ -122,8 +103,31 @@ function applyHeroPhotos() {
     } else {
       tile.style.backgroundImage = '';
       tile.classList.remove('has-photo');
+      tile.style.background = pal[k % pal.length];
     }
   });
+}
+
+// ── 首頁 Hero 設定（site/hero 文案 + site/heroSet1~3 三組照片） ──
+async function loadHeroConfig() {
+  if (!db) return;
+  try {
+    let legacy = [];
+    const doc = await db.collection('site').doc('hero').get();
+    if (doc.exists) {
+      const data = doc.data();
+      legacy = data.photos || [];   // 舊版單組照片
+      if (data.text) heroOverride = { zh: data.text.zh || {}, en: data.text.en || {} };
+    }
+    const snaps = await Promise.all(
+      [1, 2, 3].map(n => db.collection('site').doc('heroSet' + n).get())
+    );
+    snaps.forEach((s, idx) => { if (s.exists) heroSets[idx] = s.data().photos || []; });
+    // 第 1 組沒資料但有舊版照片 → 沿用為第 1 組
+    if (!heroSets[0].some(Boolean) && legacy.some(Boolean)) heroSets[0] = legacy;
+  } catch (e) { /* 沒有就維持色塊與預設文案 */ }
+  updateHeroText();
+  renderHeroFrame(heroIndex);
 }
 
 // 進入報名流程：收起首頁 Hero，讓流程圖（步驟列）成為畫面最上方
@@ -161,7 +165,7 @@ function toggleLang() {
   lang = lang === 'zh' ? 'en' : 'zh';
   document.getElementById('lang-toggle').textContent = t('langToggle');
   updateHeroText();
-  paintHero(heroIndex);   // 輪播字也跟著換語言
+  renderHeroFrame(heroIndex);   // 輪播字也跟著換語言
   refreshCurrentStep();
 }
 

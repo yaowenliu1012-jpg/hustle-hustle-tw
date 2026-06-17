@@ -1152,21 +1152,35 @@ function saveSettings() {
   alert('設定已儲存！');
 }
 
-// ── 首頁管理（Firestore: site/hero — 文字 + 照片） ───────────
-let heroPhotos = [];        // 最多 8 張 base64，'' = 空（前台顯示變色色塊）
+// ── 首頁管理（Firestore: site/hero 文字 + site/heroSet1~3 照片） ──
+// 3 組、每組 8 張，前台輪流跳換；拆 3 份文件存避免超過 Firestore 1MB 上限
+let heroSets = [[], [], []];   // heroSets[組][格] = base64，'' = 空（顯示色塊）
 const HERO_SLOTS = 8;
+const HERO_SET_COUNT = 3;
 const HERO_FIELDS = ['eyebrow', 'lead', 'start', 'fine'];   // 一般文字欄位（words 另外處理）
 
 async function loadHome() {
-  heroPhotos = [];
+  heroSets = [[], [], []];
   let text = {};
+  let legacyPhotos = [];
   if (db) {
     try {
       const doc = await db.collection('site').doc('hero').get();
       if (doc.exists) {
         const data = doc.data();
-        heroPhotos = (data.photos || []).slice(0, HERO_SLOTS);
         text = data.text || {};
+        legacyPhotos = data.photos || [];   // 舊版單組照片，遷移成第 1 組
+      }
+      // 讀 3 組照片
+      const snaps = await Promise.all(
+        [1, 2, 3].map(n => db.collection('site').doc('heroSet' + n).get())
+      );
+      snaps.forEach((s, idx) => {
+        if (s.exists) heroSets[idx] = (s.data().photos || []).slice(0, HERO_SLOTS);
+      });
+      // 第 1 組沒資料但有舊版照片 → 遷移
+      if (!heroSets[0].some(Boolean) && legacyPhotos.some(Boolean)) {
+        heroSets[0] = legacyPhotos.slice(0, HERO_SLOTS);
       }
     } catch (e) { /* 載入失敗就用預設 */ }
   }
@@ -1203,11 +1217,14 @@ async function saveHome() {
     text[lng] = o;
   });
 
-  const photos = [];
-  for (let i = 0; i < HERO_SLOTS; i++) photos[i] = heroPhotos[i] || '';
-
   try {
-    await db.collection('site').doc('hero').set({ photos, text });
+    // 文字存 site/hero（不再寫舊的 photos 欄位）；3 組照片各存一份文件
+    await db.collection('site').doc('hero').set({ text }, { merge: true });
+    await Promise.all([1, 2, 3].map(n => {
+      const photos = [];
+      for (let i = 0; i < HERO_SLOTS; i++) photos[i] = heroSets[n - 1][i] || '';
+      return db.collection('site').doc('heroSet' + n).set({ photos });
+    }));
     alert('首頁已儲存！前台重新整理即可看到。');
   } catch (e) {
     err.textContent = '儲存失敗：' + e.message;
@@ -1215,42 +1232,49 @@ async function saveHome() {
 }
 
 function renderHeroPhotoSlots() {
-  const grid = document.getElementById('hero-photo-grid');
-  if (!grid) return;
+  const wrap = document.getElementById('hero-photo-sets');
+  if (!wrap) return;
   let html = '';
-  for (let i = 0; i < HERO_SLOTS; i++) {
-    const p = heroPhotos[i];
-    html += `<div class="hero-slot">
-      <div class="hero-slot-num">#${i + 1}</div>
-      <label class="hero-slot-img">
-        ${p ? `<img src="${esc(p)}">` : '<span class="hero-slot-empty">＋ 上傳</span>'}
-        <input type="file" accept="image/*" onchange="uploadHeroPhoto(${i}, this)" hidden>
-      </label>
-      ${p ? `<button class="btn btn-danger btn-sm" onclick="removeHeroPhoto(${i})">移除</button>` : '<span class="hero-slot-hint">色塊</span>'}
+  for (let g = 0; g < HERO_SET_COUNT; g++) {
+    let slots = '';
+    for (let i = 0; i < HERO_SLOTS; i++) {
+      const p = heroSets[g][i];
+      slots += `<div class="hero-slot">
+        <div class="hero-slot-num">#${i + 1}</div>
+        <label class="hero-slot-img">
+          ${p ? `<img src="${esc(p)}">` : '<span class="hero-slot-empty">＋ 上傳</span>'}
+          <input type="file" accept="image/*" onchange="uploadHeroPhoto(${g}, ${i}, this)" hidden>
+        </label>
+        ${p ? `<button class="btn btn-danger btn-sm" onclick="removeHeroPhoto(${g}, ${i})">移除</button>` : '<span class="hero-slot-hint">色塊</span>'}
+      </div>`;
+    }
+    html += `<div class="hero-set-block">
+      <div class="hero-set-title">第 ${g + 1} 組</div>
+      <div class="hero-photo-grid">${slots}</div>
     </div>`;
   }
-  grid.innerHTML = html;
+  wrap.innerHTML = html;
 }
 
-function uploadHeroPhoto(i, input) {
+function uploadHeroPhoto(g, i, input) {
   const file = input.files[0];
   if (!file) return;
   const img = new Image();
   img.onload = () => {
-    // 方塊不大，壓到最寬 400px、JPEG 75%，8 張也遠低於 Firestore 1MB 文件上限
-    const maxW = 400;
+    // 方塊不大，壓到最寬 320px、JPEG 72%，24 張分 3 份存才不會超過 Firestore 1MB
+    const maxW = 320;
     const scale = Math.min(1, maxW / img.width);
     const canvas = document.createElement('canvas');
     canvas.width  = Math.round(img.width * scale);
     canvas.height = Math.round(img.height * scale);
     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-    heroPhotos[i] = canvas.toDataURL('image/jpeg', 0.75);
+    heroSets[g][i] = canvas.toDataURL('image/jpeg', 0.72);
     renderHeroPhotoSlots();
   };
   img.src = URL.createObjectURL(file);
 }
 
-function removeHeroPhoto(i) {
-  heroPhotos[i] = '';
+function removeHeroPhoto(g, i) {
+  heroSets[g][i] = '';
   renderHeroPhotoSlots();
 }

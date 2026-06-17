@@ -249,9 +249,9 @@
           <div class="form-group"><label>Fine print</label><input id="h-fine-en" type="text"></div>
         </div>
 
-        <h3 class="home-subhead" style="margin-top:1.5rem">Hero 照片</h3>
-        <p class="settings-note">顯示在首頁開場的散落方塊（最多 8 張，空的位置會顯示變色色塊）。<strong>建議尺寸：正方形約 800×800 px（最少 400×400 px）</strong>，系統會自動壓縮到寬 400px。手機只會顯示第 1、4、5、8 張。</p>
-        <div id="hero-photo-grid" class="hero-photo-grid"></div>
+        <h3 class="home-subhead" style="margin-top:1.5rem">Hero 照片（3 組輪播）</h3>
+        <p class="settings-note">首頁開場的散落方塊，每 2.6 秒整批跳換下一組（共 3 組、每組 8 格）。空的格子會顯示變色色塊；同一格三組都空就一直是色塊。<strong>建議正方形、約 800×800 px（最少 400×400）</strong>，系統會自動壓縮。手機只顯示每組的第 1、4、5、8 格。</p>
+        <div id="hero-photo-sets"></div>
 
         <span class="error-msg" id="home-err"></span>
         <div class="btn-row">
