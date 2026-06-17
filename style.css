@@ -126,7 +126,7 @@ body {
   pointer-events: none;
 }
 .eyebrow {
-  font-family: 'Archivo', 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', sans-serif;
   font-weight: 700;
   font-size: clamp(18px, 2.4vw, 28px);
   line-height: 1.3;
@@ -135,7 +135,7 @@ body {
 }
 .word-wrap { position: relative; z-index: 3; line-height: 1.05; }
 .word {
-  font-family: 'Archivo', 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', sans-serif;
   font-weight: 900;
   font-size: clamp(72px, 18vw, 200px);
   letter-spacing: -.04em;
@@ -156,7 +156,7 @@ body {
   line-height: 1.5;
   color: #3c352c;
 }
-.lead b { color: var(--red); font-weight: 700; }
+.lead b { color: var(--brand); font-weight: 700; }
 .cta {
   position: relative; z-index: 3;
   display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
