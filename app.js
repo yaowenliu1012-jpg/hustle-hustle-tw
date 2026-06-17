@@ -40,8 +40,7 @@ let heroTimer = null;
 function initHero() {
   updateHeroText();
   paintHero(0);
-  ['nav-start', 'hero-start', 'hero-learn'].forEach(id =>
-    document.getElementById(id)?.addEventListener('click', goToFlow));
+  document.getElementById('hero-start')?.addEventListener('click', goToFlow);
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const stage = document.getElementById('hero');
@@ -77,9 +76,7 @@ function updateHeroText() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   set('hero-eyebrow', heroText('eyebrow'));
   set('hero-start', heroText('start'));
-  set('hero-learn', heroText('learn'));
   set('hero-fine', heroText('fine'));
-  set('nav-start', heroText('start'));
   const lead = document.getElementById('hero-lead');
   if (lead) lead.innerHTML = formatLead(heroText('lead'));
 }

@@ -1155,7 +1155,7 @@ function saveSettings() {
 // ── 首頁管理（Firestore: site/hero — 文字 + 照片） ───────────
 let heroPhotos = [];        // 最多 8 張 base64，'' = 空（前台顯示變色色塊）
 const HERO_SLOTS = 8;
-const HERO_FIELDS = ['eyebrow', 'lead', 'start', 'learn', 'fine'];   // 一般文字欄位（words 另外處理）
+const HERO_FIELDS = ['eyebrow', 'lead', 'start', 'fine'];   // 一般文字欄位（words 另外處理）
 
 async function loadHome() {
   heroPhotos = [];
