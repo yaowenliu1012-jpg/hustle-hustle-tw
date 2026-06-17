@@ -225,8 +225,7 @@ body.flow-active .stage { display: none; }
   justify-content: center;
   gap: 0;
   padding: 1.25rem 1rem;
-  background: var(--bg);
-  border-bottom: 3px solid #111;
+  background: transparent;   /* 透出底圖網點，與課程頁連成一片 */
 }
 .step-item {
   display: flex;
