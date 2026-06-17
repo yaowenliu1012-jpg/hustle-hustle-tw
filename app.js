@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFirebase();
   initHero();
   await loadCourses();
+  await loadHeroPhotos();
   renderStep1();
   document.getElementById('lang-toggle').addEventListener('click', toggleLang);
 });
@@ -70,7 +71,37 @@ function paintHero(i) {
   const wordEl = document.getElementById('word');
   if (wordEl) wordEl.textContent = words[i % words.length];
   const pal = HERO_PALETTES[i % HERO_PALETTES.length];
-  document.querySelectorAll('.tile').forEach((tile, k) => { tile.style.background = pal[k % pal.length]; });
+  document.querySelectorAll('.tile').forEach((tile, k) => {
+    if (heroPhotos[k]) return;            // 有上傳照片的方塊不變色
+    tile.style.background = pal[k % pal.length];
+  });
+}
+
+// ── 首頁 Hero 照片（Firestore: site/hero） ───────────────────
+let heroPhotos = [];
+async function loadHeroPhotos() {
+  if (!db) return;
+  try {
+    const doc = await db.collection('site').doc('hero').get();
+    if (doc.exists) heroPhotos = doc.data().photos || [];
+  } catch (e) { /* 沒有就維持色塊 */ }
+  applyHeroPhotos();
+}
+
+function applyHeroPhotos() {
+  document.querySelectorAll('.tile').forEach((tile, k) => {
+    const p = heroPhotos[k];
+    if (p) {
+      tile.style.background = '';        // 清掉色塊底色
+      tile.style.backgroundImage = `url(${p})`;
+      tile.style.backgroundSize = 'cover';
+      tile.style.backgroundPosition = 'center';
+      tile.classList.add('has-photo');
+    } else {
+      tile.style.backgroundImage = '';
+      tile.classList.remove('has-photo');
+    }
+  });
 }
 
 function goToFlow() {

@@ -1,6 +1,33 @@
 /* ── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* 首頁 Hero 照片上傳格 */
+.hero-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+  margin: .5rem 0 1rem;
+}
+.hero-slot { display: flex; flex-direction: column; align-items: center; gap: .4rem; }
+.hero-slot-num { font-size: .75rem; color: var(--muted); }
+.hero-slot-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+}
+.hero-slot-img:hover { border-color: var(--brand); }
+.hero-slot-img img { width: 100%; height: 100%; object-fit: cover; }
+.hero-slot-empty { color: var(--muted); font-size: .85rem; }
+.hero-slot-hint { font-size: .72rem; color: var(--muted); }
+@media (max-width: 640px) { .hero-photo-grid { grid-template-columns: repeat(2, 1fr); } }
+
 :root {
   --brand:      #e63946;
   --brand-dark: #c1121f;

@@ -710,7 +710,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).style.display = '';
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 
-  if (tab === 'settings') loadSettingsForm();
+  if (tab === 'settings') { loadSettingsForm(); loadHeroPhotos(); }
   if (tab === 'courses') loadCourseList();
   if (tab === 'archive') renderArchives();
 }
@@ -1149,4 +1149,74 @@ function saveSettings() {
   localStorage.setItem('hhtw_discount',     document.getElementById('s-discount').value);
 
   alert('設定已儲存！');
+}
+
+// ── 首頁 Hero 照片（Firestore: site/hero） ───────────────────
+let heroPhotos = [];        // 最多 8 張 base64，'' = 空（前台顯示變色色塊）
+const HERO_SLOTS = 8;
+
+async function loadHeroPhotos() {
+  heroPhotos = [];
+  if (db) {
+    try {
+      const doc = await db.collection('site').doc('hero').get();
+      if (doc.exists) heroPhotos = (doc.data().photos || []).slice(0, HERO_SLOTS);
+    } catch (e) { /* 載入失敗就當作沒有照片 */ }
+  }
+  renderHeroPhotoSlots();
+}
+
+function renderHeroPhotoSlots() {
+  const grid = document.getElementById('hero-photo-grid');
+  if (!grid) return;
+  let html = '';
+  for (let i = 0; i < HERO_SLOTS; i++) {
+    const p = heroPhotos[i];
+    html += `<div class="hero-slot">
+      <div class="hero-slot-num">#${i + 1}</div>
+      <label class="hero-slot-img">
+        ${p ? `<img src="${esc(p)}">` : '<span class="hero-slot-empty">＋ 上傳</span>'}
+        <input type="file" accept="image/*" onchange="uploadHeroPhoto(${i}, this)" hidden>
+      </label>
+      ${p ? `<button class="btn btn-danger btn-sm" onclick="removeHeroPhoto(${i})">移除</button>` : '<span class="hero-slot-hint">色塊</span>'}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function uploadHeroPhoto(i, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    // 方塊不大，壓到最寬 400px、JPEG 75%，8 張也遠低於 Firestore 1MB 文件上限
+    const maxW = 400;
+    const scale = Math.min(1, maxW / img.width);
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    heroPhotos[i] = canvas.toDataURL('image/jpeg', 0.75);
+    renderHeroPhotoSlots();
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function removeHeroPhoto(i) {
+  heroPhotos[i] = '';
+  renderHeroPhotoSlots();
+}
+
+async function saveHeroPhotos() {
+  const err = document.getElementById('hero-photo-err');
+  err.textContent = '';
+  if (!db) { err.textContent = 'Firebase 未連線'; return; }
+  const photos = [];
+  for (let i = 0; i < HERO_SLOTS; i++) photos[i] = heroPhotos[i] || '';
+  try {
+    await db.collection('site').doc('hero').set({ photos });
+    alert('首頁照片已儲存！前台重新整理即可看到。');
+  } catch (e) {
+    err.textContent = '儲存失敗：' + e.message;
+  }
 }

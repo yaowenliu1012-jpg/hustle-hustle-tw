@@ -181,6 +181,7 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .tile svg { width: 34px; height: 34px; opacity: .22; color: #fff; }
+.tile.has-photo svg { display: none; }   /* 有照片就不顯示占位 icon */
 .t1 { top: 3%;  left: 3%;   transform: rotate(-5deg); }
 .t2 { top: 8%;  left: 15%;  transform: rotate(4deg);  width: clamp(80px, 9vw, 140px); }
 .t3 { top: 1%;  right: 15%; transform: rotate(5deg);  width: clamp(80px, 9vw, 140px); }

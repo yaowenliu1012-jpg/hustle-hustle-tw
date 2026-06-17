@@ -212,6 +212,14 @@
           <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
         </div>
         <p class="settings-note">⚠️ 設定儲存在瀏覽器本機，若清除快取或換電腦需重新設定。如需永久儲存請串接 Firebase Remote Config。</p>
+
+        <div class="section-header" style="margin-top:2.5rem"><h1>首頁 Hero 照片</h1></div>
+        <p class="settings-note">顯示在首頁開場的散落方塊（最多 8 張，空的位置會顯示變色色塊）。建議用接近方形的舞蹈照，會自動壓縮。手機只會顯示第 1、4、5、8 張。</p>
+        <div id="hero-photo-grid" class="hero-photo-grid"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveHeroPhotos()">儲存首頁照片</button>
+        </div>
+        <span class="error-msg" id="hero-photo-err"></span>
       </section>
 
     </main>
