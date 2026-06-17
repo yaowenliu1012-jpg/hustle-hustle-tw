@@ -35,6 +35,39 @@ const HERO_PALETTES = [
   ['#edbe4b', '#e2674b', '#7fa8bd', '#c04e33', '#16130f', '#edbe4b', '#e2674b', '#7fa8bd'],
   ['#16130f', '#7fa8bd', '#edbe4b', '#e2674b', '#c04e33', '#7fa8bd', '#16130f', '#edbe4b'],
 ];
+// 3 組各自的散落位置（每組 8 格的 top/bottom/left/right 與旋轉），跳換時方塊會移位
+const HERO_LAYOUTS = [
+  [
+    { top: '3%',  left: '3%',   rot: -5 },
+    { top: '8%',  left: '15%',  rot:  4 },
+    { top: '1%',  right: '15%', rot:  5 },
+    { top: '11%', right: '2%',  rot: -6 },
+    { bottom: '7%',  left: '2%',   rot:  5 },
+    { bottom: '20%', left: '14%',  rot: -4 },
+    { bottom: '3%',  right: '13%', rot:  6 },
+    { bottom: '14%', right: '1%',  rot: -5 },
+  ],
+  [
+    { top: '2%',  left: '17%',  rot:  5 },
+    { top: '15%', left: '2%',   rot: -6 },
+    { top: '4%',  right: '3%',  rot: -4 },
+    { top: '18%', right: '16%', rot:  6 },
+    { bottom: '3%',  left: '13%', rot: -5 },
+    { bottom: '17%', left: '1%',  rot:  5 },
+    { bottom: '15%', right: '3%', rot: -6 },
+    { bottom: '2%',  right: '15%',rot:  4 },
+  ],
+  [
+    { top: '11%', left: '1%',   rot:  6 },
+    { top: '2%',  left: '11%',  rot: -5 },
+    { top: '10%', right: '13%', rot:  4 },
+    { top: '2%',  right: '3%',  rot: -6 },
+    { bottom: '2%',  left: '4%',  rot: -4 },
+    { bottom: '13%', left: '15%', rot:  6 },
+    { bottom: '6%',  right: '15%',rot: -5 },
+    { bottom: '18%', right: '2%', rot:  5 },
+  ],
+];
 let heroIndex = 0;
 let heroTimer = null;
 
@@ -51,7 +84,7 @@ function initHero() {
     heroTimer = setInterval(() => {
       heroIndex++;   // 不取模，由 renderHeroFrame 內各自對組數/調色盤取模
       stage.classList.add('swapping');
-      setTimeout(() => { renderHeroFrame(heroIndex); stage.classList.remove('swapping'); }, 340);
+      setTimeout(() => { renderHeroFrame(heroIndex); stage.classList.remove('swapping'); }, 450);
     }, 2600);
   }
 }
@@ -90,9 +123,21 @@ function renderHeroFrame(i) {
   const wordEl = document.getElementById('word');
   if (wordEl) wordEl.textContent = words[i % words.length];
 
-  const set = heroSets[i % heroSets.length] || [];
+  const s = i % heroSets.length;
+  const set = heroSets[s] || [];
   const pal = HERO_PALETTES[i % HERO_PALETTES.length];
+  const layout = HERO_LAYOUTS[s % HERO_LAYOUTS.length];
   document.querySelectorAll('.tile').forEach((tile, k) => {
+    // 套用該組的散落位置
+    const pos = layout[k];
+    if (pos) {
+      tile.style.top    = pos.top    || 'auto';
+      tile.style.bottom = pos.bottom || 'auto';
+      tile.style.left   = pos.left   || 'auto';
+      tile.style.right  = pos.right  || 'auto';
+      tile.style.transform = `rotate(${pos.rot || 0}deg)`;
+    }
+    // 照片或色塊
     const p = set[k];
     if (p) {
       tile.style.background = '';
