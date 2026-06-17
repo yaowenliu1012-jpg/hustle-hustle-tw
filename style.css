@@ -99,8 +99,16 @@ body {
 #lang-toggle:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow); }
 
 /* ── Hero 開場 ───────────────────────────────────────────── */
+/* 開場區：頂欄＋Hero 填滿第一屏，步驟列因此被推到下一屏（捲動才出現） */
+.landing {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
 .stage {
   position: relative;
+  flex: 1 0 auto;          /* 填滿頂欄以外的整屏高度 */
   min-height: min(78vh, 680px);
   display: flex;
   flex-direction: column;
