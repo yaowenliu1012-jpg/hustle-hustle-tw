@@ -133,7 +133,7 @@ body {
   margin-bottom: .15em;
   position: relative; z-index: 3;
 }
-.word-wrap { position: relative; z-index: 3; line-height: 1; }
+.word-wrap { position: relative; z-index: 3; line-height: 1.05; }
 .word {
   font-family: 'Archivo', 'Noto Sans TC', sans-serif;
   font-weight: 900;
@@ -200,6 +200,9 @@ body {
   .t5 { bottom: 3%; left: 1%; }
   .t8 { bottom: 3%; right: 1%; }
   .word { font-size: clamp(60px, 21vw, 120px); }
+  /* 手機：大字較大，小標與大字要更大間距避免擠壓 */
+  .eyebrow { margin-bottom: .6em; }
+  .word-wrap { line-height: 1.12; }
 }
 @media (prefers-reduced-motion: reduce) {
   .word, .tile { transition: none; }
