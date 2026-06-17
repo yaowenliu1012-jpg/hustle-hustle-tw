@@ -126,8 +126,13 @@ function applyHeroPhotos() {
   });
 }
 
+// 進入報名流程：收起首頁 Hero，讓流程圖（步驟列）成為畫面最上方
+function enterFlow() {
+  document.body.classList.add('flow-active');
+  window.scrollTo(0, 0);
+}
 function goToFlow() {
-  document.querySelector('.steps')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  enterFlow();
 }
 
 function initFirebase() {
@@ -199,6 +204,8 @@ function renderStep1() {
     ${renderCourseGroup(showEvents, showCourses.length ? (lang === 'zh' ? '活動' : 'Events') : '')}`;
 
   bindCourseCards(main);
+  // 已在流程中（例如從步驟2按返回）：維持流程圖在最上方
+  if (document.body.classList.contains('flow-active')) window.scrollTo(0, 0);
 }
 
 function setTypeFilter(f) {
@@ -315,6 +322,7 @@ function courseBanner() {
 
 // ── Step 2：選方案 ───────────────────────────────────────────
 function renderStep2() {
+  enterFlow();
   state.step = 2;
   updateStepIndicator();
   const course = COURSES.find(c => c.id === state.courseId);
@@ -351,6 +359,7 @@ function goStep3() {
 
 // ── Step 3：填資料 ───────────────────────────────────────────
 function renderStep3() {
+  enterFlow();
   state.step = 3;
   updateStepIndicator();
   const isDuo = state.planId === 'duo';
@@ -461,6 +470,7 @@ function validateStep3() {
 
 // ── Step 4：匯款 ─────────────────────────────────────────────
 function renderStep4() {
+  enterFlow();
   state.step = 4;
   updateStepIndicator();
   const course = COURSES.find(c => c.id === state.courseId);
