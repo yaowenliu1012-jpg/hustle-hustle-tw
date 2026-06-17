@@ -106,8 +106,9 @@ body {
   display: flex;
   flex-direction: column;
 }
-/* 進入報名流程後收起 Hero，讓流程圖成為畫面最上方 */
-body.flow-active .landing { display: none; }
+/* 進入報名流程後只收起 Hero（保留 logo＋EN 頂欄），讓流程圖緊接在頂欄下方 */
+body.flow-active .landing { min-height: 0; }
+body.flow-active .stage { display: none; }
 .stage {
   position: relative;
   flex: 1 0 auto;          /* 填滿頂欄以外的整屏高度 */
