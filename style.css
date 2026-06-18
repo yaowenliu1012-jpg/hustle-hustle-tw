@@ -236,7 +236,7 @@ body.flow-active .hero-transition { display: none; }   /* 進流程後不需要�
   display: flex;
   justify-content: center;
   gap: 0;
-  padding: 3.25rem 1rem 1.25rem;   /* 與緩衝帶拉開距離（≒到標題的間距） */
+  padding: 6.5rem 1rem 1.25rem;   /* 與緩衝帶拉開距離（原間距的兩倍） */
   background: transparent;   /* 透出底圖網點，與課程頁連成一片 */
 }
 .step-item {
@@ -610,7 +610,7 @@ legend {
   .course-grid { grid-template-columns: 1fr; }
   .btn-row { flex-direction: column; }
   .btn { width: 100%; }
-  .steps { padding: 2.5rem .5rem 1rem; }
+  .steps { padding: 5rem .5rem 1rem; }
   .step-num { width: 38px; height: 38px; font-size: 1rem; }
   .step-item::after { top: 17px; }
   .step-label { font-size: .68rem; }
