@@ -114,15 +114,15 @@ body.flow-active .stage { display: none; }
 .hero-transition {
   height: 220px;
   background-image: url("halftone.svg");
-  background-size: 128px 220px;
+  background-size: 135.4px 220px;   /* 與 viewBox 128×208 等比，維持正圓 */
   background-repeat: repeat-x;
   background-position: center top;
-  /* 上下邊緣淡入奶油底，不留生硬黑邊 */
+  /* 上下邊緣淡入，與頁面連續 */
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 74%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 74%, transparent 100%);
 }
 @media (max-width: 760px) {
-  .hero-transition { height: 160px; background-size: 93px 160px; }
+  .hero-transition { height: 160px; background-size: 98.5px 160px; }
 }
 body.flow-active .hero-transition { display: none; }   /* 進流程後不需要緩衝 */
 .stage {
