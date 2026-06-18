@@ -115,7 +115,7 @@ body.flow-active .stage { display: none; }
   height: 168px;
   margin-top: clamp(48px, 9vh, 120px);   /* 與 Hero 拉開距離 */
   background-image: url("halftone.svg");
-  background-size: 112px 168px;   /* 與 viewBox 128×192 等比，維持正圓、圓點大小不變 */
+  background-size: 160px 168px;   /* 與 viewBox 160×168 1:1，SVG 座標＝實際 px */
   background-repeat: repeat-x;
   background-position: center top;
 }
