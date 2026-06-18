@@ -109,6 +109,17 @@ body {
 /* 進入報名流程後只收起 Hero（保留 logo＋EN 頂欄），讓流程圖緊接在頂欄下方 */
 body.flow-active .landing { min-height: 0; }
 body.flow-active .stage { display: none; }
+
+/* Hero → 報名 的圓點漸層緩衝帶（halftone）：上密下疏，視覺上分開兩頁 */
+.hero-transition {
+  height: clamp(140px, 20vh, 240px);
+  background-image: radial-gradient(circle, var(--ink) 3px, transparent 3.4px);
+  background-size: 17px 17px;
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 92%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 92%);
+}
+body.flow-active .hero-transition { display: none; }   /* 進流程後不需要緩衝 */
 .stage {
   position: relative;
   flex: 1 0 auto;          /* 填滿頂欄以外的整屏高度 */
