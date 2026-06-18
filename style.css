@@ -110,14 +110,19 @@ body {
 body.flow-active .landing { min-height: 0; }
 body.flow-active .stage { display: none; }
 
-/* Hero → 報名 的圓點漸層緩衝帶（halftone）：上密下疏，視覺上分開兩頁 */
+/* Hero → 報名 的圓點漸層緩衝帶：真實 halftone（黑底白點，白點半徑由大到小） */
 .hero-transition {
-  height: clamp(140px, 20vh, 240px);
-  background-image: radial-gradient(circle, var(--ink) 3px, transparent 3.4px);
-  background-size: 17px 17px;
+  height: 220px;
+  background-image: url("halftone.svg");
+  background-size: 128px 220px;
+  background-repeat: repeat-x;
   background-position: center top;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 92%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 92%);
+  /* 上下邊緣淡入奶油底，不留生硬黑邊 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 74%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 74%, transparent 100%);
+}
+@media (max-width: 760px) {
+  .hero-transition { height: 160px; background-size: 93px 160px; }
 }
 body.flow-active .hero-transition { display: none; }   /* 進流程後不需要緩衝 */
 .stage {
