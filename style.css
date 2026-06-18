@@ -236,42 +236,42 @@ body.flow-active .hero-transition { display: none; }   /* 進流程後不需要�
   display: flex;
   justify-content: center;
   gap: 0;
-  padding: 1.25rem 1rem;
+  padding: 3.25rem 1rem 1.25rem;   /* 與緩衝帶拉開距離（≒到標題的間距） */
   background: transparent;   /* 透出底圖網點，與課程頁連成一片 */
 }
 .step-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .25rem;
+  gap: .4rem;
   flex: 1;
-  max-width: 120px;
+  max-width: 150px;
   position: relative;
 }
 .step-item::after {
   content: '';
   position: absolute;
-  top: 14px;
+  top: 21px;
   right: -50%;
   width: 100%;
-  height: 3px;
+  height: 4px;
   background: #111;
   z-index: 0;
 }
 .step-item:last-child::after { display: none; }
 
 .step-num {
-  width: 30px; height: 30px;
+  width: 46px; height: 46px;
   border-radius: 50%;
   background: #fff;
-  border: 3px solid #111;
+  border: 4px solid #111;
   display: flex; align-items: center; justify-content: center;
-  font-size: .8rem; font-weight: 900;
+  font-size: 1.2rem; font-weight: 900;
   position: relative; z-index: 1;
   transition: all .3s;
 }
 .step-label {
-  font-size: .72rem;
+  font-size: .95rem;
   font-weight: 700;
   color: var(--text-muted);
   transition: color .3s;
@@ -285,9 +285,19 @@ body.flow-active .hero-transition { display: none; }   /* 進流程後不需要�
 
 /* ── Main Content ─────────────────────────────────────────── */
 #main {
-  max-width: 700px;
+  max-width: 1040px;   /* 課程區用寬版，左右不再過空 */
   margin: 2rem auto;
-  padding: 0 1rem 4rem;
+  padding: 0 1.5rem 4rem;
+}
+/* 表單／方案／確認頁維持窄版好讀，置中於寬版容器中 */
+#reg-form,
+.plan-grid,
+.confirm-box,
+.bank-box,
+.success-box {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .step-title {
   font-size: 1.5rem;
@@ -600,6 +610,8 @@ legend {
   .course-grid { grid-template-columns: 1fr; }
   .btn-row { flex-direction: column; }
   .btn { width: 100%; }
-  .steps { padding: 1rem .5rem; }
-  .step-label { font-size: .65rem; }
+  .steps { padding: 2.5rem .5rem 1rem; }
+  .step-num { width: 38px; height: 38px; font-size: 1rem; }
+  .step-item::after { top: 17px; }
+  .step-label { font-size: .68rem; }
 }
