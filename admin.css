@@ -32,25 +32,35 @@
 .hero-set-title { font-size: .85rem; font-weight: 700; color: var(--muted); margin: 0 0 .5rem; }
 
 :root {
-  --brand:      #e63946;
-  --brand-dark: #c1121f;
-  --bg:         #0d0d0d;
-  --surface:    #1a1a1a;
-  --surface2:   #242424;
-  --border:     #333;
-  --text:       #f0f0f0;
-  --muted:      #888;
-  --success:    #2dc653;
-  --danger:     #e63946;
-  --warning:    #f4a261;
-  --radius:     10px;
+  --brand:      #e2674b;   /* 珊瑚橘紅（與前台一致） */
+  --brand-dark: #c04e33;
+  --bg:         #f7efdf;   /* 奶油米白 */
+  --surface:    #fff;
+  --surface2:   #f6e8cb;
+  --border:     #111;
+  --text:       #111;
+  --muted:      #6b6256;
+  --success:    #1a9e44;
+  --danger:     #d23b2c;
+  --warning:    #b07d00;
+  --radius:     14px;
+  --shadow:     5px 5px 0 #111;
 }
 
 body {
   font-family: 'Noto Sans TC', 'Helvetica Neue', Arial, sans-serif;
   background: var(--bg);
+  /* 奶油底＋細網點，呼應前台 */
+  background-image: radial-gradient(rgba(17, 17, 17, .06) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
   color: var(--text);
   min-height: 100vh;
+}
+
+/* 普普風卡片：粗黑框 + 硬陰影 */
+.login-box, .stat-card, .setting-card, .cap-card,
+.course-admin-card, .archive-card, .modal {
+  box-shadow: var(--shadow);
 }
 
 /* ── Login ────────────────────────────────────────────────── */
@@ -62,7 +72,7 @@ body {
 }
 .login-box {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 2.5rem;
   width: 100%;
@@ -83,7 +93,7 @@ body {
   width: 200px;
   flex-shrink: 0;
   background: var(--surface);
-  border-right: 1px solid var(--border);
+  border-right: 2px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 1.25rem 0;
@@ -96,7 +106,7 @@ body {
   font-weight: 700;
   color: var(--brand);
   padding: 0 1.25rem 1.25rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   margin-bottom: .75rem;
 }
 .nav-item {
@@ -115,7 +125,7 @@ body {
 .btn-logout {
   margin: auto 1.25rem 0;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   color: var(--muted);
   padding: .5rem;
   border-radius: 8px;
@@ -145,12 +155,13 @@ body {
 .header-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 
 select {
-  background: var(--surface2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 2px solid var(--border);
   color: var(--text);
   padding: .45rem .75rem;
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: .85rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -163,7 +174,7 @@ select {
 }
 .stat-card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem 1.5rem;
   flex: 1;
@@ -190,11 +201,11 @@ th {
   text-align: left;
   font-weight: 600;
   color: var(--muted);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 td {
   padding: .6rem .75rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   vertical-align: middle;
 }
 tr:hover td { background: var(--surface); }
@@ -225,20 +236,21 @@ tr:hover td { background: var(--surface); }
 /* Status badges */
 .badge {
   display: inline-block;
-  padding: .2rem .55rem;
-  border-radius: 20px;
+  padding: .15rem .55rem;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
   font-size: .75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
-.badge-pending  { background: #3d2f00; color: var(--warning); }
-.badge-approved { background: #0a2e14; color: var(--success); }
-.badge-rejected { background: #2e0a0a; color: var(--danger); }
+.badge-pending  { background: #fbe6b8; color: #7a5e00; }
+.badge-approved { background: #cdeed7; color: #136d2e; }
+.badge-rejected { background: #f7d3ce; color: #a82a1d; }
 
 /* 招生狀態徽章：錄取=綠、候補=紅、待定=黃 */
-.badge-admit { background: #0a2e14; color: var(--success); }
-.badge-wait  { background: #2e0a0a; color: var(--danger); }
-.badge-hold  { background: #3d2f00; color: var(--warning); }
-.admit-none  { color: var(--muted, #888); }
+.badge-admit { background: #cdeed7; color: #136d2e; }
+.badge-wait  { background: #f7d3ce; color: #a82a1d; }
+.badge-hold  { background: #fbe6b8; color: #7a5e00; }
+.admit-none  { color: var(--muted); }
 
 /* 招生額度摘要 */
 .capacity-summary { margin: .25rem 0 1rem; }
@@ -246,7 +258,7 @@ tr:hover td { background: var(--surface); }
 .cap-grid  { display: flex; flex-wrap: wrap; gap: .75rem; }
 .cap-card  {
   background: var(--surface2);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 10px;
   padding: .6rem .85rem;
   min-width: 180px;
@@ -264,14 +276,14 @@ tr:hover td { background: var(--surface); }
   flex-wrap: wrap;
   margin: 1rem 0 .25rem;
   padding-top: .9rem;
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--border);
 }
 .admit-control select {
-  padding: .35rem .55rem;
-  border-radius: 8px;
-  background: var(--surface2);
+  padding: .35rem .7rem;
+  border-radius: 999px;
+  background: var(--surface);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
 }
 .admit-hint { font-size: .78rem; color: var(--muted, #999); }
 
@@ -279,14 +291,11 @@ tr:hover td { background: var(--surface); }
 .trash-panel { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px dashed var(--border); }
 .trash-heading { font-size: 1.1rem; margin: 0 0 .4rem; }
 
-/* 結案按鈕（課程管理卡片內） */
-.btn-archive { background: #1f3a5f; color: #cfe3ff; }
-
 /* 結案資料頁 */
 .archive-list { display: flex; flex-direction: column; gap: 1.25rem; }
 .archive-card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 12px;
   padding: 1rem 1.25rem 1.25rem;
 }
@@ -311,7 +320,7 @@ tr:hover td { background: var(--surface); }
   font-weight: 700;
   padding: .5rem .75rem;
   background: var(--surface2);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 8px;
   list-style: none;
 }
@@ -324,7 +333,7 @@ tr:hover td { background: var(--surface); }
   gap: 1rem;
   align-items: flex-start;
   background: var(--surface2);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-top: none;
   border-radius: 0 0 8px 8px;
   padding: .85rem 1rem;
@@ -347,21 +356,22 @@ tr:hover td { background: var(--surface); }
 
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn {
-  padding: .55rem 1.1rem;
-  border: none;
-  border-radius: 8px;
+  padding: .5rem 1.1rem;
+  border: 2px solid var(--border);
+  border-radius: 999px;
   font-size: .88rem;
   cursor: pointer;
-  font-weight: 600;
-  transition: opacity .2s;
+  font-weight: 700;
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-.btn:hover { opacity: .82; }
-.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow); }
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn-primary   { background: var(--brand); color: #fff; }
-.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-.btn-success   { background: var(--success); color: #000; }
+.btn-secondary { background: #fff; color: var(--text); }
+.btn-success   { background: var(--success); color: #fff; }
 .btn-danger    { background: var(--danger); color: #fff; }
-.btn-sm        { padding: .3rem .65rem; font-size: .78rem; }
+.btn-archive   { background: #36506e; color: #fff; }   /* 結案：灰藍 */
+.btn-sm        { padding: .3rem .7rem; font-size: .78rem; }
 .btn-row       { display: flex; gap: .75rem; margin-top: 1.5rem; justify-content: flex-end; }
 
 /* ── Form ─────────────────────────────────────────────────── */
@@ -369,15 +379,15 @@ tr:hover td { background: var(--surface); }
 .form-group label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .35rem; }
 .form-group input {
   width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: 8px;
   padding: .55rem .8rem;
   color: var(--text);
   font-size: .9rem;
 }
 .form-group input:focus { outline: none; border-color: var(--brand); }
-.error-msg { display: block; font-size: .8rem; color: #ff6b6b; margin-top: .3rem; min-height: 1em; }
+.error-msg { display: block; font-size: .8rem; color: var(--danger); margin-top: .3rem; min-height: 1em; }
 
 /* ── Settings ─────────────────────────────────────────────── */
 .settings-grid {
@@ -387,7 +397,7 @@ tr:hover td { background: var(--surface); }
 }
 .setting-card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 1.25rem;
 }
@@ -401,7 +411,7 @@ tr:hover td { background: var(--surface); }
   align-items: center;
   gap: 1rem;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: .85rem 1rem;
 }
@@ -429,22 +439,24 @@ tr:hover td { background: var(--surface); }
 .event-tag {
   display: inline-block;
   font-size: .7rem;
-  font-weight: 600;
-  color: #5bc0eb;
-  background: #0a2535;
-  border-radius: 20px;
-  padding: .12rem .5rem;
+  font-weight: 700;
+  color: #2c5a73;
+  background: #cfe6f0;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: .08rem .5rem;
   margin-left: .35rem;
   vertical-align: middle;
 }
 .hidden-tag {
   display: inline-block;
   font-size: .7rem;
-  font-weight: 600;
-  color: var(--warning);
-  background: #3d2f00;
-  border-radius: 20px;
-  padding: .12rem .5rem;
+  font-weight: 700;
+  color: #7a5e00;
+  background: #fbe6b8;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: .08rem .5rem;
   margin-left: .35rem;
   vertical-align: middle;
 }
@@ -459,8 +471,8 @@ tr:hover td { background: var(--surface); }
 .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 textarea {
   width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: 8px;
   padding: .55rem .8rem;
   color: var(--text);
@@ -473,7 +485,7 @@ textarea:focus { outline: none; border-color: var(--brand); }
   max-width: 160px;
   border-radius: 8px;
   margin-top: .5rem;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
 }
 /* 中英左右對照 */
 .bilingual-header {
@@ -482,7 +494,7 @@ textarea:focus { outline: none; border-color: var(--brand); }
   gap: .75rem;
   margin: 1.25rem 0 .6rem;
   padding-bottom: .4rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 .bilingual-header span {
   font-size: .8rem;
@@ -523,7 +535,7 @@ input[type="file"] { color: var(--muted); font-size: .85rem; }
 }
 .modal {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 1.75rem;
   width: 100%;
@@ -533,7 +545,7 @@ input[type="file"] { color: var(--muted); font-size: .85rem; }
 }
 .modal h3 { font-size: 1.1rem; margin-bottom: 1.25rem; }
 .modal-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-.modal-table td { padding: .45rem .25rem; border-bottom: 1px solid var(--border); }
+.modal-table td { padding: .45rem .25rem; border-bottom: 2px solid var(--border); }
 .modal-table td:first-child { color: var(--muted); width: 40%; }
 .modal-actions {
   display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem;
@@ -557,7 +569,7 @@ input[type="file"] { color: var(--muted); font-size: .85rem; }
     align-items: center;
     padding: .5rem .75rem;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
     gap: .25rem;
   }
   .sidebar-logo {
