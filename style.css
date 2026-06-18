@@ -113,7 +113,7 @@ body.flow-active .stage { display: none; }
 /* Hero → 報名 的緩衝帶：一排黑色扇貝弧線 */
 .hero-transition {
   height: 26px;
-  margin-top: clamp(48px, 9vh, 120px);   /* 與 Hero 拉開距離 */
+  margin-top: 112px;   /* +stage 底 padding 44px = 與最後一行字相距 156px */
   background-image: url("scallop.svg");
   background-size: 56px 26px;   /* 與 viewBox 56×26 1:1，SVG 座標＝實際 px */
   background-repeat: repeat-x;
@@ -127,7 +127,7 @@ body.flow-active .hero-transition { display: none; }   /* 進流程後不需要�
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;   /* 文字靠下，與緩衝帶維持固定間距 */
   text-align: center;
   padding: 10px 16px 44px;
   overflow: hidden;
