@@ -842,7 +842,10 @@ function renderArchives() {
   const wrap = document.getElementById('archive-list');
   if (!wrap) return;
 
-  const courses = regCourses.filter(c => c.archived)
+  updateArchiveTrashButton();
+  renderArchiveTrash();
+
+  const courses = regCourses.filter(c => c.archived && !c.archiveDeleted)
     .sort((a, b) => new Date(b.closedAt || 0) - new Date(a.closedAt || 0));
 
   if (!courses.length) {
@@ -919,6 +922,7 @@ function renderArchives() {
         <div class="archive-actions">
           <button class="btn btn-secondary btn-sm" onclick="duplicateCourse('${c.id}')">${c.type === 'event' ? '複製新活動' : '複製新課程'}</button>
           <button class="btn btn-secondary btn-sm" onclick="exportArchive('${c.id}')">匯出 Excel</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteArchive('${c.id}')">刪除</button>
         </div>
       </div>
       ${detail}
@@ -942,6 +946,103 @@ function exportArchive(courseId) {
   const regs = allRegistrations.filter(r => r.archived && !r.deleted && regBelongsToCourse(r, c))
     .sort((a, b) => (a.seq || 0) - (b.seq || 0));
   downloadCsv(registrationsToCsv(regs), `結案_${c.name}_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ── 結案資料刪除（軟刪除 → 可還原 / 永久刪除） ────────────────
+async function deleteArchive(courseId) {
+  const c = regCourses.find(x => x.id === courseId);
+  if (!c) return;
+  if (!confirm(`確定要刪除結案資料「${c.name}」嗎？\n會移到「刪除資料」，之後可在那裡還原。`)) return;
+
+  const archiveDeletedAt = new Date().toISOString();
+  if (db && !courseId.startsWith('demo')) {
+    try {
+      await db.collection('courses').doc(courseId).update({ archiveDeleted: true, archiveDeletedAt });
+    } catch (e) { alert('刪除失敗：' + e.message); return; }
+  }
+  c.archiveDeleted = true;
+  c.archiveDeletedAt = archiveDeletedAt;
+  renderArchives();
+}
+
+function toggleArchiveTrash() {
+  const panel = document.getElementById('archive-trash-panel');
+  panel.style.display = panel.style.display === 'none' ? '' : 'none';
+  updateArchiveTrashButton();
+  renderArchiveTrash();
+}
+
+function updateArchiveTrashButton() {
+  const btn = document.getElementById('btn-toggle-archive-trash');
+  if (!btn) return;
+  const n = regCourses.filter(c => c.archived && c.archiveDeleted).length;
+  const open = document.getElementById('archive-trash-panel')?.style.display !== 'none';
+  btn.textContent = open ? `🗑 收合刪除資料（${n}）` : `🗑 刪除資料${n ? `（${n}）` : ''}`;
+}
+
+function renderArchiveTrash() {
+  const tbody = document.getElementById('archive-trash-tbody');
+  if (!tbody) return;
+  const courses = regCourses
+    .filter(c => c.archived && c.archiveDeleted)
+    .sort((a, b) => new Date(b.archiveDeletedAt || 0) - new Date(a.archiveDeletedAt || 0));
+
+  if (!courses.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">沒有被刪除的結案資料</td></tr>';
+    return;
+  }
+  tbody.innerHTML = courses.map(c => {
+    const regs = allRegistrations.filter(r => r.archived && !r.deleted && regBelongsToCourse(r, c));
+    const del    = c.archiveDeletedAt ? new Date(c.archiveDeletedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+    const closed = c.closedAt ? new Date(c.closedAt).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+    return `<tr>
+      <td>${del}</td>
+      <td>${esc(c.emoji || '')} ${esc(c.name)}</td>
+      <td>${closed}</td>
+      <td>${regs.length}</td>
+      <td>
+        <button class="btn btn-success btn-sm" onclick="restoreArchive('${c.id}')">還原</button>
+        <button class="btn btn-danger btn-sm" onclick="permanentDeleteArchive('${c.id}')">永久刪除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function restoreArchive(courseId) {
+  const c = regCourses.find(x => x.id === courseId);
+  if (!c) return;
+  if (db && !courseId.startsWith('demo')) {
+    try {
+      await db.collection('courses').doc(courseId).update({
+        archiveDeleted:   firebase.firestore.FieldValue.delete(),
+        archiveDeletedAt: firebase.firestore.FieldValue.delete(),
+      });
+    } catch (e) { alert('還原失敗：' + e.message); return; }
+  }
+  delete c.archiveDeleted;
+  delete c.archiveDeletedAt;
+  renderArchives();
+}
+
+async function permanentDeleteArchive(courseId) {
+  const c = regCourses.find(x => x.id === courseId);
+  if (!c) return;
+  const regs = allRegistrations.filter(r => r.archived && !r.deleted && regBelongsToCourse(r, c));
+  if (!confirm(`確定要永久刪除結案資料「${c.name}」嗎？\n會一併刪除這份歸檔的 ${regs.length} 筆報名，此動作無法復原！`)) return;
+
+  if (db && !courseId.startsWith('demo')) {
+    try {
+      const batch = db.batch();
+      regs.filter(r => !r.id.startsWith('demo'))
+          .forEach(r => batch.delete(db.collection('registrations').doc(r.id)));
+      batch.delete(db.collection('courses').doc(courseId));
+      await batch.commit();
+    } catch (e) { alert('刪除失敗：' + e.message); return; }
+  }
+  const regIds = regs.map(r => r.id);
+  allRegistrations = allRegistrations.filter(r => !regIds.includes(r.id));
+  regCourses = regCourses.filter(x => x.id !== courseId);
+  renderArchives();
 }
 
 async function moveCourse(index, dir) {
