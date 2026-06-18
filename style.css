@@ -110,12 +110,12 @@ body {
 body.flow-active .landing { min-height: 0; }
 body.flow-active .stage { display: none; }
 
-/* Hero → 報名 的圓點漸層緩衝帶：真實 halftone（黑底白點，白點半徑由大到小） */
+/* Hero → 報名 的緩衝帶：一排黑色扇貝弧線 */
 .hero-transition {
-  height: 168px;
+  height: 16px;
   margin-top: clamp(48px, 9vh, 120px);   /* 與 Hero 拉開距離 */
-  background-image: url("halftone.svg");
-  background-size: 160px 168px;   /* 與 viewBox 160×168 1:1，SVG 座標＝實際 px */
+  background-image: url("scallop.svg");
+  background-size: 40px 16px;   /* 與 viewBox 40×16 1:1，SVG 座標＝實際 px */
   background-repeat: repeat-x;
   background-position: center top;
 }
