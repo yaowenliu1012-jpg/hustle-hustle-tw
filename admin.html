@@ -154,6 +154,8 @@
         <div class="section-header">
           <h1>結案資料</h1>
           <div class="header-actions">
+            <button class="btn btn-secondary" id="btn-archive-select-all" onclick="toggleArchiveSelectAll()" style="display:none">☑ 全選</button>
+            <button class="btn btn-danger" id="btn-archive-bulk-delete" onclick="bulkDeleteArchives()" style="display:none">🗑 刪除勾選</button>
             <button class="btn btn-secondary" id="btn-toggle-archive-trash" onclick="toggleArchiveTrash()">🗑 刪除資料</button>
             <button class="btn btn-primary" onclick="loadRegistrations()">重新整理</button>
           </div>

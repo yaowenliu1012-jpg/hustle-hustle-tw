@@ -815,7 +815,7 @@ async function archiveCourse(courseId) {
   if (!c) return;
 
   const regs = allRegistrations.filter(r => !r.deleted && !r.archived && regBelongsToCourse(r, c));
-  if (!confirm(`確定要將「${c.name}」結案嗎？\n\n• 課程會停止前台報名，並從「課程管理」移除\n• ${regs.length} 筆報名資料一併歸檔到「📦 結案資料」\n• 結案後不提供還原`)) return;
+  if (!confirm(`確定要將「${c.name}」結案嗎？\n\n• 課程會停止前台報名，並從「課程管理」移除\n• ${regs.length} 筆報名資料一併歸檔到「📦 結案資料」\n• 之後可在「📦 結案資料」解除結案還原，或刪除`)) return;
 
   const closedAt = new Date().toISOString();
   if (db) {
@@ -850,6 +850,7 @@ function renderArchives() {
 
   if (!courses.length) {
     wrap.innerHTML = '<p class="settings-note">還沒有結案的課程。在「課程管理」點課程的「結案」即可歸檔成一份資料。</p>';
+    updateArchiveBulkBar();
     return;
   }
 
@@ -915,11 +916,15 @@ function renderArchives() {
 
     return `<div class="archive-card">
       <div class="archive-head">
-        <div>
-          <div class="archive-name">${esc(c.emoji || '')} ${esc(c.name)} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''}</div>
-          <div class="archive-meta">結案時間：${closed}　｜　報名 ${regs.length} 筆　｜　Leader ${leader}　Follower ${follower}</div>
+        <div class="archive-head-left">
+          <input type="checkbox" class="archive-check" data-id="${c.id}" onchange="updateArchiveBulkBar()">
+          <div>
+            <div class="archive-name">${esc(c.emoji || '')} ${esc(c.name)} ${c.type === 'event' ? '<span class="event-tag">活動</span>' : ''}</div>
+            <div class="archive-meta">結案時間：${closed}　｜　報名 ${regs.length} 筆　｜　Leader ${leader}　Follower ${follower}</div>
+          </div>
         </div>
         <div class="archive-actions">
+          <button class="btn btn-secondary btn-sm" onclick="unarchiveCourse('${c.id}')">解除結案</button>
           <button class="btn btn-secondary btn-sm" onclick="duplicateCourse('${c.id}')">${c.type === 'event' ? '複製新活動' : '複製新課程'}</button>
           <button class="btn btn-secondary btn-sm" onclick="exportArchive('${c.id}')">匯出 Excel</button>
           <button class="btn btn-danger btn-sm" onclick="deleteArchive('${c.id}')">刪除</button>
@@ -938,6 +943,8 @@ function renderArchives() {
       </div>
     </div>`;
   }).join('');
+
+  updateArchiveBulkBar();
 }
 
 function exportArchive(courseId) {
@@ -946,6 +953,77 @@ function exportArchive(courseId) {
   const regs = allRegistrations.filter(r => r.archived && !r.deleted && regBelongsToCourse(r, c))
     .sort((a, b) => (a.seq || 0) - (b.seq || 0));
   downloadCsv(registrationsToCsv(regs), `結案_${c.name}_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ── 解除結案：把結案課程還原回「課程與活動管理」 ──────────────
+async function unarchiveCourse(courseId) {
+  const c = regCourses.find(x => x.id === courseId);
+  if (!c) return;
+  const regs = allRegistrations.filter(r => r.archived && !r.deleted && regBelongsToCourse(r, c));
+  if (!confirm(`確定要將「${c.name}」解除結案嗎？\n\n• 課程會還原到「課程與活動管理」（預設為隱藏，可自行重新上架）\n• ${regs.length} 筆報名會一併還原到「報名管理」`)) return;
+
+  if (db && !courseId.startsWith('demo')) {
+    try {
+      const batch = db.batch();
+      batch.update(db.collection('courses').doc(courseId), {
+        archived: false,
+        active: false,
+        closedAt: firebase.firestore.FieldValue.delete(),
+      });
+      regs.filter(r => !String(r.id).startsWith('demo'))
+          .forEach(r => batch.update(db.collection('registrations').doc(r.id), {
+            archived: firebase.firestore.FieldValue.delete(),
+            closedAt: firebase.firestore.FieldValue.delete(),
+          }));
+      await batch.commit();
+    } catch (e) { alert('解除結案失敗：' + e.message); return; }
+  }
+
+  c.archived = false; c.active = false; delete c.closedAt;
+  regs.forEach(r => { delete r.archived; delete r.closedAt; });
+  await loadCourseCaps();
+  loadCourseList();
+  applyFilters();
+  renderArchives();
+  alert(`「${c.name}」已解除結案。課程與 ${regs.length} 筆報名已還原；課程預設為隱藏，可到「課程與活動管理」重新上架。`);
+}
+
+// ── 結案資料勾選批次刪除 ─────────────────────────────────────
+function toggleArchiveSelectAll() {
+  const checks = [...document.querySelectorAll('.archive-check')];
+  const allChecked = checks.length && checks.every(cb => cb.checked);
+  checks.forEach(cb => cb.checked = !allChecked);
+  updateArchiveBulkBar();
+}
+
+function updateArchiveBulkBar() {
+  const total = document.querySelectorAll('.archive-check').length;
+  const n = document.querySelectorAll('.archive-check:checked').length;
+  const selectAllBtn = document.getElementById('btn-archive-select-all');
+  const bulkBtn = document.getElementById('btn-archive-bulk-delete');
+  if (selectAllBtn) selectAllBtn.style.display = total ? '' : 'none';
+  if (bulkBtn) {
+    bulkBtn.style.display = n ? '' : 'none';
+    bulkBtn.textContent = `🗑 刪除勾選（${n}）`;
+  }
+}
+
+async function bulkDeleteArchives() {
+  const ids = [...document.querySelectorAll('.archive-check:checked')].map(cb => cb.dataset.id);
+  if (!ids.length) return;
+  if (!confirm(`確定要刪除勾選的 ${ids.length} 份結案資料嗎？\n會移到「刪除資料」，之後可在那裡還原。`)) return;
+
+  const archiveDeletedAt = new Date().toISOString();
+  if (db) {
+    try {
+      const batch = db.batch();
+      ids.filter(id => !id.startsWith('demo'))
+         .forEach(id => batch.update(db.collection('courses').doc(id), { archiveDeleted: true, archiveDeletedAt }));
+      await batch.commit();
+    } catch (e) { alert('刪除失敗：' + e.message); return; }
+  }
+  regCourses.forEach(c => { if (ids.includes(c.id)) { c.archiveDeleted = true; c.archiveDeletedAt = archiveDeletedAt; } });
+  renderArchives();
 }
 
 // ── 結案資料刪除（軟刪除 → 可還原 / 永久刪除） ────────────────
