@@ -110,14 +110,24 @@ body {
 body.flow-active .landing { min-height: 0; }
 body.flow-active .stage { display: none; }
 
-/* Hero → 報名 的緩衝帶：一排黑色扇貝弧線 */
+/* Hero → 報名 的緩衝帶：黑色扇貝波浪線 + 疊一組貓咪 */
 .hero-transition {
+  position: relative;
   height: 26px;
   margin-top: 112px;   /* +stage 底 padding 44px = 與最後一行字相距 156px */
   background-image: url("scallop.svg");
   background-size: 56px 26px;   /* 與 viewBox 56×26 1:1，SVG 座標＝實際 px */
   background-repeat: repeat-x;
   background-position: center top;
+}
+/* 一組貓咪坐在波浪線上（中間偏右，比照示意圖） */
+.hero-cats {
+  position: absolute;
+  left: 56%;
+  bottom: 14px;        /* 貓腳貼在波浪線上緣 */
+  height: 120px;
+  width: auto;
+  pointer-events: none;
 }
 body.flow-active .hero-transition { display: none; }   /* 進流程後不需要緩衝 */
 .stage {
