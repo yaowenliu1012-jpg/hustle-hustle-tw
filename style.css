@@ -116,11 +116,11 @@ body.flow-active .stage { display: none; }
   height: 56px;
   margin-top: 96px;    /* 波浪上緣與最後一行字的距離（容器變高，已從 112 微減） */
 }
-/* 貓咪在底層（中間偏右），下半身被前面的波浪遮罩蓋住 */
+/* 貓咪在底層（中間偏右），下半身被前面的波浪遮罩蓋住；手臂完整露出在波浪上方 */
 .hero-cats {
   position: absolute;
   left: 56%;
-  bottom: 8px;
+  bottom: 30px;
   height: 120px;
   width: auto;
   z-index: 1;
@@ -243,8 +243,8 @@ body.flow-active .hero-transition { display: none; }   /* 進流程後不需要�
   /* 手機：大字較大，小標與大字要更大間距避免擠壓 */
   .eyebrow { margin-bottom: .6em; }
   .word-wrap { line-height: 1.12; }
-  /* 手機：貓咪縮小並左移，避免貼邊或溢出 */
-  .hero-cats { height: 90px; left: 44%; bottom: 12px; }
+  /* 手機：貓咪縮小並左移，避免貼邊或溢出；手臂完整露出 */
+  .hero-cats { height: 90px; left: 44%; bottom: 36px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .word, .tile { transition: none; }
