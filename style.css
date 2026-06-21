@@ -110,23 +110,30 @@ body {
 body.flow-active .landing { min-height: 0; }
 body.flow-active .stage { display: none; }
 
-/* Hero → 報名 的緩衝帶：黑色扇貝波浪線 + 疊一組貓咪 */
+/* Hero → 報名 的緩衝帶：貓咪從波浪後探出 */
 .hero-transition {
   position: relative;
-  height: 26px;
-  margin-top: 112px;   /* +stage 底 padding 44px = 與最後一行字相距 156px */
-  background-image: url("scallop.svg");
-  background-size: 56px 26px;   /* 與 viewBox 56×26 1:1，SVG 座標＝實際 px */
-  background-repeat: repeat-x;
-  background-position: center top;
+  height: 56px;
+  margin-top: 96px;    /* 波浪上緣與最後一行字的距離（容器變高，已從 112 微減） */
 }
-/* 一組貓咪坐在波浪線上（中間偏右，比照示意圖） */
+/* 貓咪在底層（中間偏右），下半身被前面的波浪遮罩蓋住 */
 .hero-cats {
   position: absolute;
   left: 56%;
-  bottom: 14px;        /* 貓腳貼在波浪線上緣 */
+  bottom: 8px;
   height: 120px;
   width: auto;
+  z-index: 1;
+  pointer-events: none;
+}
+/* 波浪遮罩：上緣扇貝線、以下填奶油色，疊在貓前面把下半身遮住 */
+.hero-wave {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 56px;
+  background: url("wave-mask.svg") left bottom repeat-x;
+  background-size: 56px 56px;
+  z-index: 2;
   pointer-events: none;
 }
 body.flow-active .hero-transition { display: none; }   /* 進流程後不需要緩衝 */
@@ -236,6 +243,8 @@ body.flow-active .hero-transition { display: none; }   /* 進流程後不需要�
   /* 手機：大字較大，小標與大字要更大間距避免擠壓 */
   .eyebrow { margin-bottom: .6em; }
   .word-wrap { line-height: 1.12; }
+  /* 手機：貓咪縮小並左移，避免貼邊或溢出 */
+  .hero-cats { height: 90px; left: 44%; bottom: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .word, .tile { transition: none; }

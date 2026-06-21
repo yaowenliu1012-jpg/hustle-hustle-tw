@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">
+  <!-- 波浪上緣以下填背景奶油色，當作遮住貓下半身的遮罩 -->
+  <path d="M0 4 A 30 30 0 0 0 56 4 L56 56 L0 56 Z" fill="#f7efdf"/>
+  <!-- 波浪上緣黑線（同扇貝弧） -->
+  <path d="M0 4 A 30 30 0 0 0 56 4" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+</svg>
